@@ -1,769 +1,1197 @@
+
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vortex — ส่งข้อความแบบไม่ระบุตัวตน</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f5f3ff', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Chart.js สำหรับ Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); }
-        .dark .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#7055ed">
+<meta name="description" content="Whispr เว็บไซต์รับข้อความนิรนาม">
+<title>Whispr — Anonymous Messages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#f7f7fc;--surface:#fff;--soft:#f0eefb;
+ --text:#242238;--muted:#77748b;--border:#e7e5f0;
+ --primary:#7055ed;--danger:#e44765;--success:#15966b;
+ --shadow:0 12px 36px rgba(30,20,80,.07)
+}
+[data-theme=dark]{
+ --bg:#11121c;--surface:#1d1e2c;--soft:#29293b;
+ --text:#f6f5ff;--muted:#aaa8bc;--border:#39394c;
+ --shadow:0 12px 36px rgba(0,0,0,.2)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Noto Sans Thai",sans-serif;line-height:1.6}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #a99aff;outline-offset:2px}
+a{color:var(--primary);text-decoration:none}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(1.8rem,4vw,2.6rem)}
+h2{font-size:1.4rem}
+h3{font-size:1.08rem}
+small,.muted{color:var(--muted)}
+.hidden{display:none!important}
+.container{width:min(1100px,calc(100% - 30px));margin:auto}
+header{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--border)}
+nav{display:flex;align-items:center;justify-content:space-between;min-height:68px;gap:12px}
+.brand{font-size:1.35rem;font-weight:800;color:var(--text)}
+.brand span{background:var(--primary);color:white;padding:6px 11px;border-radius:11px;margin-right:8px}
+.actions,.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.between{justify-content:space-between}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;background:var(--soft);color:var(--text);border-radius:12px;padding:11px 16px;font-weight:600;transition:.2s}
+.btn:hover:not(:disabled){filter:brightness(.96)}
+.primary{background:var(--primary);color:white}
+.danger{background:var(--danger);color:white}
+.outline{background:var(--surface);border-color:var(--border)}
+.small{padding:7px 11px;font-size:.83rem}
+.full{width:100%}
+main{padding:30px 0 65px;min-height:75vh}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:23px;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.cols{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.sidebar{align-self:start;position:sticky;top:90px}
+.menu{display:block;width:100%;padding:12px;text-align:left;background:transparent;border:0;color:var(--text);border-radius:10px}
+.menu.active{background:var(--soft);color:var(--primary);font-weight:700}
+.field{margin:14px 0}
+.field label{display:block;font-weight:600;font-size:.9rem;margin-bottom:6px}
+.input{display:block;width:100%;padding:12px 13px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text)}
+textarea.input{min-height:115px;resize:vertical}
+.auth{max-width:450px;margin:35px auto}
+.hero{text-align:center;max-width:720px;margin:45px auto}
+.hero p{color:var(--muted)}
+.gradient{background:linear-gradient(110deg,#7155ed,#d45bd9);color:transparent;background-clip:text}
+.avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;background:var(--soft)}
+.avatar-fallback{display:grid;place-items:center;background:linear-gradient(135deg,#7155ed,#c45add);color:white;font-size:2rem;font-weight:700}
+.empty{text-align:center;padding:40px 15px;color:var(--muted);border:1px dashed var(--border);border-radius:15px}
+.message{margin:12px 0;overflow-wrap:anywhere}
+.message p{white-space:pre-wrap}
+.tag{display:inline-block;background:var(--soft);color:var(--muted);padding:3px 9px;border-radius:30px;font-size:.78rem}
+.stat{font-size:1.9rem;font-weight:800}
+.divider{border:0;border-top:1px solid var(--border);margin:20px 0}
+.modal-layer{position:fixed;inset:0;z-index:90;background:rgba(10,8,25,.68);display:grid;place-items:center;padding:15px}
+.modal{background:var(--surface);border-radius:20px;padding:23px;width:min(650px,100%);max-height:92vh;overflow:auto}
+.toast-area{position:fixed;bottom:18px;right:18px;z-index:120;max-width:350px}
+.toast{background:var(--surface);padding:13px 17px;margin-top:8px;border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:11px;box-shadow:var(--shadow)}
+.toast.error{border-left-color:var(--danger)}
+.toast.success{border-left-color:var(--success)}
+.image-preview{max-width:100%;max-height:220px;border-radius:12px}
+.reveal{position:relative;width:min(100%,420px);overflow:hidden;border-radius:12px}
+.reveal img{display:block;width:100%;filter:blur(24px);transition:filter .25s}
+.reveal.open img{filter:none}
+.reveal button{position:absolute;inset:0;width:100%;border:0;background:rgba(20,15,40,.4);color:white;font-weight:700}
+.reveal.open button{background:transparent;color:transparent}
+.story-image{width:min(260px,100%);aspect-ratio:9/16;object-fit:contain;border-radius:12px}
+canvas.chart{width:100%;height:230px}
+audio{max-width:100%}
+footer{text-align:center;padding:24px;color:var(--muted);font-size:.85rem}
+@media(max-width:800px){
+ .grid,.two,.cols{grid-template-columns:1fr}
+ .sidebar{position:static}
+ .card{padding:17px}
+ .hero{margin:20px auto}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
+<body>
+<header>
+<nav class="container">
+<a href="./" class="brand"><span>W</span>Whispr</a>
+<div class="actions">
+<button class="btn small outline" id="langBtn">EN</button>
+<button class="btn small outline" id="themeBtn">Theme</button>
+<button class="btn small primary" id="accountBtn">เข้าสู่ระบบ</button>
+</div>
+</nav>
+</header>
+<main id="app" class="container" aria-live="polite">
+<div class="empty">กำลังเชื่อมต่อ Firebase...</div>
+</main>
+<div id="modalRoot"></div>
+<div id="toastRoot" class="toast-area" role="status"></div>
+<footer>Whispr © 2026 · Share kindly, stay anonymous.</footer>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import{
+getAuth,onAuthStateChanged,createUserWithEmailAndPassword,
+signInWithEmailAndPassword,signOut,sendEmailVerification,
+sendPasswordResetEmail,updateProfile,deleteUser,
+reauthenticateWithCredential,EmailAuthProvider
+}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import{
+getFirestore,doc,getDoc,collection,query,orderBy,
+limit,getDocs,startAfter
+}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-    <!-- Custom Modal Container -->
-    <div id="modal-container" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4"></div>
+const firebaseConfig={
+apiKey:"AIzaSyAuafJFSxf5MH2wG8UO5er14peRwT1jl8g",
+authDomain:"anonmsg-7fc77.firebaseapp.com",
+projectId:"anonmsg-7fc77",
+storageBucket:"anonmsg-7fc77.firebasestorage.app",
+messagingSenderId:"619051284089",
+appId:"1:619051284089:web:599084ffeeedf557de46a8",
+measurementId:"G-367T0PCVBJ"
+};
 
-    <!-- Navigation Header -->
-    <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 glass">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="router.navigate('home')">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-violet-500/30">V</div>
-                <span class="text-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">Vortex</span>
-            </div>
-            <div id="nav-actions" class="flex items-center space-x-3">
-                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition">
-                    <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                </button>
-                <div id="auth-nav-slot"></div>
-            </div>
-        </div>
-    </header>
+/*
+ Set this to your deployed Cloudflare Worker URL.
+ The ImgBB key must be stored in Worker Secrets.
+ Do not put the key in public HTML.
+*/
+const WORKER_BASE_URL="";
+const MAX_TEXT=1000;
+const MAX_IMAGE=5*1024*1024;
+const MAX_AUDIO=8*1024*1024;
+const MAX_SECONDS=60;
 
-    <!-- Main App Container -->
-    <main id="app" class="flex-grow max-w-6xl w-full mx-auto p-4 sm:p-6">
-        <!-- Views injected dynamically -->
-    </main>
+const firebase=initializeApp(firebaseConfig);
+const auth=getAuth(firebase);
+const db=getFirestore(firebase);
+const $=id=>document.getElementById(id);
+const S={
+user:null,profile:null,route:"home",tab:"inbox",
+messages:[],cursor:null,wall:[],publicProfile:null,
+theme:localStorage.getItem("wh-theme")||"light",
+lang:localStorage.getItem("wh-lang")||"th",
+image:null,audio:null,audioURL:null,
+recorder:null,stream:null,recordTimer:null,recordSeconds:0,
+story:null,storyTheme:"minimal",storyBlob:null,
+storyShowName:true,storyShowBrand:true,
+storyColor:"",storyTextColor:"",
+questions:{},busy:false,analytics:null,
+filter:"all",search:"",category:"general"
+};
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-500">
-        <p>&copy; 2026 Vortex Platform. Secure Firebase Architecture & ImgBB Integration.</p>
-    </footer>
+const words={
+th:{login:"เข้าสู่ระบบ",register:"สมัครสมาชิก",inbox:"กล่องข้อความ",
+settings:"ตั้งค่า",stats:"สถิติ",blocks:"บล็อกผู้ส่ง",
+wall:"Public Wall",logout:"ออกจากระบบ",send:"ส่งข้อความ",
+random:"สุ่มคำถาม",loading:"กำลังโหลด"},
+en:{login:"Sign in",register:"Sign up",inbox:"Inbox",
+settings:"Settings",stats:"Analytics",blocks:"Blocked senders",
+wall:"Public Wall",logout:"Sign out",send:"Send",
+random:"Random question",loading:"Loading"}
+};
+const tr=k=>words[S.lang][k]||k;
+const escapeHTML=v=>String(v??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+})[c]);
+const safeURL=v=>{
+try{const u=new URL(v,location.origin);return["http:","https:"].includes(u.protocol)?u.href:""}catch{return""}
+};
+const dateText=v=>{
+if(!v)return"";
+const d=v.toDate?v.toDate():v.seconds?new Date(v.seconds*1000):new Date(v);
+return isNaN(d.getTime())?"":d.toLocaleString(S.lang==="th"?"th-TH":"en-US",{dateStyle:"medium",timeStyle:"short"});
+};
+const questions={
+general:[
+"ช่วงนี้มีอะไรที่ทำให้ยิ้มได้บ้าง?",
+"วันนี้มีเรื่องดี ๆ อะไรเกิดขึ้น?",
+"สิ่งที่อยากลองทำสักครั้งคืออะไร?",
+"ถ้าบอกตัวเองเมื่อปีที่แล้วได้จะบอกอะไร?",
+"เรื่องเล็ก ๆ ที่ทำให้มีความสุขคืออะไร?",
+"มีอะไรที่กำลังตั้งตารออยู่?",
+"เป้าหมายเล็ก ๆ ของสัปดาห์นี้คืออะไร?",
+"สิ่งที่อยากเรียนรู้เพิ่มเติมคืออะไร?"
+],
+fun:[
+"ถ้ามีพลังวิเศษจะเลือกอะไร?",
+"ถ้าไปเที่ยวได้ทุกที่ตอนนี้จะไปไหน?",
+"ถ้าเปิดร้านหนึ่งร้านจะขายอะไร?",
+"อาหารอะไรที่กินได้ทุกวัน?",
+"ถ้าได้หยุดสามวันจะทำอะไร?",
+"ภาพยนตร์เรื่องไหนที่ดูซ้ำได้?",
+"ถ้าได้เป็นตัวละครในหนังจะเลือกใคร?",
+"วันหยุดในฝันเป็นแบบไหน?"
+],
+friendship:[
+"มิตรภาพที่ดีสำหรับคุณคืออะไร?",
+"กิจกรรมที่ชอบทำกับเพื่อนคืออะไร?",
+"คำชมแบบไหนที่อยากได้ยิน?",
+"อะไรทำให้รู้สึกสบายใจเวลาอยู่กับเพื่อน?",
+"ถ้าชวนเพื่อนไปเที่ยวจะไปไหน?",
+"เพื่อนเคยทำอะไรที่ทำให้ประทับใจ?",
+"คุณชอบคุยเรื่องอะไรกับเพื่อน?",
+"มีคำแนะนำดี ๆ เรื่องมิตรภาพไหม?"
+],
+memories:[
+"ความทรงจำวัยเด็กที่ชอบคืออะไร?",
+"วันไหนที่อยากกลับไปสัมผัสอีกครั้ง?",
+"เพลงไหนทำให้นึกถึงความทรงจำดี ๆ?",
+"ของขวัญชิ้นไหนที่ประทับใจ?",
+"การเดินทางครั้งไหนที่จำได้ไม่ลืม?",
+"สิ่งที่เคยทำสำเร็จแล้วภูมิใจคืออะไร?",
+"สถานที่ไหนทำให้รู้สึกคิดถึง?",
+"ช่วงเวลาเรียบง่ายที่มีความสุขคืออะไร?"
+],
+favorites:[
+"เพลงที่ฟังบ่อยที่สุดคือเพลงอะไร?",
+"สีโปรดของคุณคืออะไร?",
+"หนังสือเล่มโปรดคืออะไร?",
+"เครื่องดื่มที่ชอบที่สุดคืออะไร?",
+"ฤดูที่ชอบคือฤดูไหน?",
+"งานอดิเรกที่ชอบคืออะไร?",
+"สถานที่พักผ่อนที่ชอบคือที่ไหน?",
+"อาหารเช้าที่ชอบที่สุดคืออะไร?"
+]
+};
+const englishQuestions={
+general:["What made you smile today?","What are you looking forward to?","What would you like to learn?","What is your small goal this week?"],
+fun:["What superpower would you choose?","Where would you travel?","What shop would you open?","What is your dream weekend?"],
+friendship:["What makes a great friend?","What do you enjoy with friends?","What makes you feel appreciated?","What is your friendship advice?"],
+memories:["What is your favorite childhood memory?","What day would you relive?","Which trip was unforgettable?","What makes you nostalgic?"],
+favorites:["What song is on repeat?","What is your favorite food?","What is your favorite season?","What hobby do you love?"]
+};
 
-    <!-- Firebase & App Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAuafJFSxf5MH2wG8UO5er14peRwT1jl8g",
-            authDomain: "anonmsg-7fc77.firebaseapp.com",
-            projectId: "anonmsg-7fc77",
-            storageBucket: "anonmsg-7fc77.firebasestorage.app",
-            messagingSenderId: "619051284089",
-            appId: "1:619051284089:web:599084ffeeedf557de46a8",
-            measurementId: "G-367T0PCVBJ"
-        };
-
-        const IMGBB_API_KEY = "2ee007fe6916aba0796a39684e15efe7";
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const functions = getFunctions(app);
-
-        window.currentUser = null;
-        window.currentProfile = null;
-
-        // Toast Notification System
-        window.showToast = function(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto p-4 rounded-2xl shadow-xl text-white font-medium flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 ${type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 50);
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        };
-
-        window.toggleDarkMode = function() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-        };
-
-        // Auth State Listener & Router Resolve
-        onAuthStateChanged(auth, async (user) => {
-            window.currentUser = user;
-            if (user) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    window.currentProfile = userDoc.data();
-                }
-            } else {
-                window.currentProfile = null;
-            }
-            router.resolve();
-        });
-
-        window.router = {
-            navigate: function(routeName) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const u = urlParams.get('u');
-                if (u) {
-                    renderPublicProfile(u);
-                    return;
-                }
-                updateNavAuth();
-                if (routeName === 'home') {
-                    if (!window.currentUser) renderAuthView();
-                    else if (!window.currentProfile) renderOnboardingView();
-                    else renderDashboardView();
-                } else if (routeName === 'inbox') {
-                    renderInboxView();
-                } else if (routeName === 'analytics') {
-                    renderAnalyticsView();
-                } else if (routeName === 'settings') {
-                    renderSettingsView();
-                } else if (routeName === 'wall') {
-                    renderPublicWallView();
-                }
-            },
-            resolve: function() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const u = urlParams.get('u');
-                if (u) {
-                    renderPublicProfile(u);
-                } else {
-                    router.navigate('home');
-                }
-            }
-        };
-
-        function updateNavAuth() {
-            const slot = document.getElementById('auth-nav-slot');
-            if (window.currentUser) {
-                slot.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <button onclick="router.navigate('inbox')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition">Inbox</button>
-                        <button onclick="router.navigate('settings')" class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition">ตั้งค่า</button>
-                        <button onclick="handleSignOut()" class="px-3.5 py-2 text-xs font-bold rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">ออก</button>
-                    </div>
-                `;
-            } else {
-                slot.innerHTML = '';
-            }
-        }
-
-        window.handleSignOut = async function() {
-            await signOut(auth);
-            window.currentProfile = null;
-            window.history.pushState({}, '', window.location.pathname);
-            router.navigate('home');
-            window.showToast('ออกจากระบบเรียบร้อย', 'success');
-        };
-
-        // --- VIEWS IMPLEMENTATION ---
-
-        function renderAuthView() {
-            document.getElementById('app').innerHTML = `
-                <div class="max-w-md mx-auto mt-12 p-8 rounded-3xl glass shadow-2xl border border-slate-200 dark:border-slate-800">
-                    <div class="text-center mb-8">
-                        <h1 class="text-3xl font-extrabold tracking-tight mb-2">ยินดีต้อนรับสู่ Vortex</h1>
-                        <p class="text-sm text-slate-500">แพลตฟอร์มส่งข้อความนิรนาม ปลอดภัย ไร้กังวล</p>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <button onclick="handleGoogleLogin()" class="w-full py-3.5 px-4 rounded-2xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-850 font-semibold flex items-center justify-center space-x-3 transition">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.18 21.32 7.22 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.5-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.1 0 9.99 0 12s.43 3.9 1.19 5.42l4.09-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.22 0 3.18 2.68 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
-                            <span>เข้าสู่ระบบด้วย Google</span>
-                        </button>
-
-                        <div class="flex items-center my-4">
-                            <div class="flex-grow border-t border-slate-300 dark:border-slate-800"></div>
-                            <span class="px-3 text-xs text-slate-400 uppercase font-semibold">หรือใช้อีเมล</span>
-                            <div class="flex-grow border-t border-slate-300 dark:border-slate-800"></div>
-                        </div>
-
-                        <form onsubmit="handleEmailAuth(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider mb-1">อีเมล</label>
-                                <input type="email" id="auth-email" required class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:ring-2 focus:ring-violet-500 outline-none transition text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider mb-1">รหัสผ่าน</label>
-                                <input type="password" id="auth-password" required class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:ring-2 focus:ring-violet-500 outline-none transition text-sm">
-                            </div>
-                            <button type="submit" class="w-full py-4 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-lg shadow-violet-500/25 transition">เข้าสู่ระบบ / สมัครสมาชิก</button>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-
-        window.handleGoogleLogin = async function() {
-            try {
-                const provider = new GoogleAuthProvider();
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (!userDoc.exists()) {
-                    const baseUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const reserveFn = httpsCallable(functions, 'reserveUsername');
-                    try {
-                        await reserveFn({ username: baseUsername, displayName: user.displayName || 'Vortex User' });
-                    } catch (e) {
-                        await reserveFn({ username: baseUsername + Math.floor(Math.random()*1000), displayName: user.displayName || 'Vortex User' });
-                    }
-                }
-                window.showToast('เข้าสู่ระบบด้วย Google สำเร็จ!', 'success');
-                router.resolve();
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        window.handleEmailAuth = async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            try {
-                let userCred;
-                try {
-                    userCred = await signInWithEmailAndPassword(auth, email, password);
-                } catch (err) {
-                    userCred = await createUserWithEmailAndPassword(auth, email, password);
-                    const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const reserveFn = httpsCallable(functions, 'reserveUsername');
-                    try {
-                        await reserveFn({ username: baseUsername, displayName: 'Vortex User' });
-                    } catch (e) {
-                        await reserveFn({ username: baseUsername + Math.floor(Math.random()*1000), displayName: 'Vortex User' });
-                    }
-                }
-                window.showToast('เข้าสู่ระบบสำเร็จ!', 'success');
-                router.resolve();
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        function renderOnboardingView() {
-            document.getElementById('app').innerHTML = `
-                <div class="max-w-md mx-auto mt-12 p-8 rounded-3xl glass shadow-2xl border border-slate-200 dark:border-slate-800">
-                    <h2 class="text-2xl font-bold mb-2">ตั้งค่าโปรไฟล์เริ่มต้น</h2>
-                    <p class="text-sm text-slate-500 mb-6">เลือก Username สำหรับลิงก์รับข้อความของคุณ</p>
-                    <form onsubmit="handleOnboardingSubmit(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Username</label>
-                            <input type="text" id="onboard-username" required placeholder="myusername" class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:ring-2 focus:ring-violet-500 outline-none text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider mb-1">ชื่อที่แสดง</label>
-                            <input type="text" id="onboard-displayname" required value="${window.currentUser.displayName || ''}" class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:ring-2 focus:ring-violet-500 outline-none text-sm">
-                        </div>
-                        <button type="submit" class="w-full py-4 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold transition shadow-lg shadow-violet-500/25">บันทึกและเริ่มใช้งาน</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        window.handleOnboardingSubmit = async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('onboard-username').value.trim().toLowerCase();
-            const displayName = document.getElementById('onboard-displayname').value.trim();
-            try {
-                const reserveFn = httpsCallable(functions, 'reserveUsername');
-                await reserveFn({ username, displayName });
-                window.showToast('ตั้งค่าโปรไฟล์สำเร็จ!', 'success');
-                window.location.reload();
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        function renderDashboardView() {
-            const p = window.currentProfile;
-            const shareLink = `${window.location.origin}${window.location.pathname}?u=${p.username}`;
-            document.getElementById('app').innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-1 p-6 rounded-3xl glass shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center">
-                        <div class="w-24 h-24 rounded-full bg-violet-600 text-white font-bold text-3xl flex items-center justify-center mb-4 shadow-xl overflow-hidden">
-                            ${p.photoURL ? `<img src="${p.photoURL}" class="w-full h-full object-cover">` : p.displayName.charAt(0)}
-                        </div>
-                        <h2 class="text-xl font-bold">${p.displayName}</h2>
-                        <p class="text-sm text-violet-500 font-semibold mb-4">@${p.username}</p>
-                        <p class="text-xs text-slate-500 mb-6">${p.bio || ''}</p>
-                        <div class="w-full space-y-2.5">
-                            <button onclick="router.navigate('inbox')" class="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold transition shadow-md">เปิดกล่องข้อความ (Inbox)</button>
-                            <button onclick="router.navigate('wall')" class="w-full py-3.5 rounded-2xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold transition">Public Wall 🌟</button>
-                            <button onclick="router.navigate('analytics')" class="w-full py-3.5 rounded-2xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold transition">สถิติและ Analytics</button>
-                        </div>
-                    </div>
-                    <div class="md:col-span-2 p-6 rounded-3xl glass shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-center">
-                        <h3 class="text-lg font-bold mb-2">ลิงก์รับข้อความนิรนามของคุณ</h3>
-                        <p class="text-sm text-slate-500 mb-4">คัดลอกลิงก์นี้ไปแชร์ลงบน Instagram Story หรือโซเชียลมีเดีย</p>
-                        <div class="flex items-center space-x-2 mb-6">
-                            <input type="text" readonly value="${shareLink}" id="share-link-input" class="flex-grow px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 font-mono text-sm outline-none">
-                            <button onclick="navigator.clipboard.writeText('${shareLink}'); window.showToast('คัดลอกลิงก์แล้ว!', 'success');" class="px-5 py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold transition">คัดลอก</button>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-sm flex items-center justify-between">
-                            <span>สถานะรับข้อความ: <strong>${p.acceptsMessages !== false ? 'เปิดรับอยู่ 🟢' : 'ปิดชั่วคราว 🔴'}</strong></span>
-                            <button onclick="toggleAcceptMessages()" class="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold">${p.acceptsMessages !== false ? 'ปิดรับ' : 'เปิดรับ'}</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        window.toggleAcceptMessages = async function() {
-            try {
-                const newStatus = window.currentProfile.acceptsMessages === false ? true : false;
-                await updateDoc(doc(db, 'users', window.currentUser.uid), { acceptsMessages: newStatus });
-                window.currentProfile.acceptsMessages = newStatus;
-                renderDashboardView();
-                window.showToast('อัปเดตสถานะสำเร็จ', 'success');
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        // --- PUBLIC PROFILE & SEND MESSAGE VIEW ---
-        async function renderPublicProfile(username) {
-            const app = document.getElementById('app');
-            app.innerHTML = `<div class="text-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div></div>`;
-
-            const q = query(collection(db, 'users'), where('usernameLower', '==', username.toLowerCase()));
-            const snap = await getDocs(q);
-            if (snap.empty) {
-                app.innerHTML = `<div class="text-center py-20"><h2 class="text-2xl font-bold mb-2">ไม่พบผู้ใช้งานนี้</h2><p class="text-slate-500">ตรวจสอบลิงก์ใหม่อีกครั้ง</p></div>`;
-                return;
-            }
-
-            const profile = snap.docs[0].data();
-            const recipientUid = snap.docs[0].id;
-
-            app.innerHTML = `
-                <div class="max-w-lg mx-auto mt-6 p-8 rounded-3xl glass shadow-2xl border border-slate-200 dark:border-slate-800">
-                    <div class="text-center mb-6">
-                        <div class="w-20 h-20 rounded-full bg-violet-600 text-white font-bold text-2xl mx-auto flex items-center justify-center mb-3 shadow-xl overflow-hidden">
-                            ${profile.photoURL ? `<img src="${profile.photoURL}" class="w-full h-full object-cover">` : profile.displayName.charAt(0)}
-                        </div>
-                        <h2 class="text-2xl font-bold">${profile.displayName}</h2>
-                        <p class="text-sm text-violet-500 font-semibold">@${profile.username}</p>
-                        <p class="text-xs text-slate-500 mt-2">${profile.bio || ''}</p>
-                    </div>
-
-                    ${profile.acceptsMessages !== false ? `
-                        <form onsubmit="handleSendAnonymousMessage(event, '${recipientUid}')" class="space-y-4">
-                            <div class="relative">
-                                <textarea id="msg-content" rows="4" required placeholder="ส่งข้อความนิรนามหา ${profile.displayName}..." class="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:ring-2 focus:ring-violet-500 outline-none text-sm resize-none"></textarea>
-                                <button type="button" onclick="insertRandomQuestion()" class="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-bold hover:bg-violet-500/20 transition">✨ สุ่มคำถาม</button>
-                            </div>
-                            
-                            <!-- Image Attachment via ImgBB -->
-                            <div class="flex items-center space-x-2">
-                                <input type="file" id="msg-image" accept="image/*" class="hidden" onchange="previewAttachedImage(this)">
-                                <label for="msg-image" class="cursor-pointer px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-semibold hover:bg-slate-300 dark:hover:bg-slate-700 transition">
-                                    <span>📷 แนบรูปภาพ</span>
-                                </label>
-                                <span id="img-filename" class="text-xs text-slate-400 truncate"></span>
-                            </div>
-                            <div id="img-preview-container" class="hidden relative w-20 h-20 rounded-xl overflow-hidden border border-slate-300">
-                                <img id="img-preview" class="w-full h-full object-cover">
-                                <button type="button" onclick="removeAttachedImage()" class="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 text-[10px]">✕</button>
-                            </div>
-
-                            <button type="submit" id="send-msg-btn" class="w-full py-4 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-xl shadow-violet-500/25 transition">ส่งข้อความนิรนาม 🚀</button>
-                        </form>
-                    ` : `
-                        <div class="p-6 rounded-2xl bg-rose-500/10 text-rose-600 text-center font-semibold">เจ้าของบัญชีนี้ปิดรับข้อความชั่วคราว</div>
-                    `}
-                </div>
-            `;
-        }
-
-        const questionsPool = [
-            "ช่วงนี้มีอะไรที่ทำให้ยิ้มได้บ้าง?",
-            "ถ้าเลือกไปเที่ยวได้หนึ่งที่ อยากไปที่ไหน?",
-            "เพลงที่ฟังบ่อยที่สุดช่วงนี้คือเพลงอะไร?",
-            "สิ่งอยากลองทำสักครั้งในชีวิตคืออะไร?",
-            "เรื่องเล็ก ๆ ที่ทำให้มีความสุขวันนี้คืออะไร?"
-        ];
-        window.insertRandomQuestion = function() {
-            const q = questionsPool[Math.floor(Math.random() * questionsPool.length)];
-            document.getElementById('msg-content').value = q;
-        };
-
-        let attachedImageFile = null;
-        window.previewAttachedImage = function(input) {
-            if (input.files && input.files[0]) {
-                attachedImageFile = input.files[0];
-                document.getElementById('img-filename').textContent = attachedImageFile.name;
-                const reader = new FileReader();
-                reader.onload = e => {
-                    document.getElementById('img-preview').src = e.target.result;
-                    document.getElementById('img-preview-container').classList.remove('hidden');
-                };
-                reader.readAsDataURL(attachedImageFile);
-            }
-        };
-
-        window.removeAttachedImage = function() {
-            attachedImageFile = null;
-            document.getElementById('msg-image').value = '';
-            document.getElementById('img-filename').textContent = '';
-            document.getElementById('img-preview-container').classList.add('hidden');
-        };
-
-        window.handleSendAnonymousMessage = async function(e, recipientUid) {
-            e.preventDefault();
-            const content = document.getElementById('msg-content').value.trim();
-            if (!content) return;
-            const btn = document.getElementById('send-msg-btn');
-            btn.disabled = true;
-            btn.textContent = 'กำลังส่ง...';
-
-            try {
-                let imageUrl = '';
-                if (attachedImageFile) {
-                    const formData = new FormData();
-                    formData.append('image', attachedImageFile);
-                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const imgData = await res.json();
-                    if (imgData.success) {
-                        imageUrl = imgData.data.url;
-                    } else {
-                        throw new Error('อัปโหลดรูปภาพไม่สำเร็จ');
-                    }
-                }
-
-                let senderToken = localStorage.getItem('vortex_sender_token');
-                if (!senderToken) {
-                    senderToken = 'tk_' + Math.random().toString(36).substring(2) + Date.now();
-                    localStorage.setItem('vortex_sender_token', senderToken);
-                }
-
-                const sendFn = httpsCallable(functions, 'sendAnonymousMessage');
-                await sendFn({
-                    recipientUid,
-                    content,
-                    imageUrl,
-                    senderToken,
-                    userAgent: navigator.userAgent
-                });
-
-                window.showToast('ส่งข้อความนิรนามสำเร็จ!', 'success');
-                document.getElementById('msg-content').value = '';
-                removeAttachedImage();
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'ส่งข้อความนิรนาม 🚀';
-            }
-        };
-
-        // --- INBOX VIEW ---
-        function renderInboxView() {
-            if (!window.currentUser) { router.navigate('home'); return; }
-            document.getElementById('app').innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold">กล่องข้อความนิรนาม (Inbox)</h2>
-                        <button onclick="router.navigate('home')" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-sm font-bold">← กลับหน้าหลัก</button>
-                    </div>
-                    <div id="messages-list" class="space-y-4">
-                        <div class="text-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div></div>
-                    </div>
-                </div>
-            `;
-            loadUserMessages();
-        }
-
-        async function loadUserMessages() {
-            const q = query(collection(db, 'messages'), where('recipientUid', '==', window.currentUser.uid));
-            const snap = await getDocs(q);
-            const container = document.getElementById('messages-list');
-            if (snap.empty) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-500 p-8 rounded-3xl glass">ยังไม่มีข้อความนิรนามในขณะนี้</div>`;
-                return;
-            }
-
-            let html = '';
-            snap.forEach(docSnap => {
-                const m = docSnap.data();
-                const id = docSnap.id;
-                html += `
-                    <div class="p-6 rounded-3xl glass shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col space-y-3">
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>🕒 ${m.createdAt ? new Date(m.createdAt.toDate()).toLocaleString() : 'เมื่อสักครู่'}</span>
-                            <span>📱 ${m.hintDevice || 'อุปกรณ์ทั่วไป'}</span>
-                        </div>
-                        <p class="text-lg font-medium whitespace-pre-wrap">${m.content}</p>
-                        ${m.imageUrl ? `
-                            <div class="relative w-40 h-40 rounded-2xl overflow-hidden border border-slate-300 group cursor-pointer select-none" onmousedown="revealImage(this, true)" onmouseup="revealImage(this, false)" ontouchstart="revealImage(this, true)" ontouchend="revealImage(this, false)">
-                                <img src="${m.imageUrl}" class="w-full h-full object-cover filter blur-xl transition duration-300">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs font-bold">แตะค้างเพื่อดูรูป</div>
-                            </div>
-                        ` : ''}
-                        <div class="flex items-center space-x-3 pt-2">
-                            <button onclick="openReplyModal('${id}')" class="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition">ตอบกลับ</button>
-                            <button onclick="publishToWall('${id}')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition">เผยแพร่ Public Wall</button>
-                            <button onclick="openStoryModal('${encodeURIComponent(m.content)}')" class="px-4 py-2 rounded-xl bg-pink-600 text-white text-xs font-bold hover:bg-pink-700 transition">📸 Instagram Story</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        window.revealImage = function(el, show) {
-            const img = el.querySelector('img');
-            if (show) img.classList.remove('filter', 'blur-xl');
-            else img.classList.add('filter', 'blur-xl');
-        };
-
-        window.openStoryModal = function(text) {
-            const modal = document.getElementById('modal-container');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modal.innerHTML = `
-                <div class="p-6 rounded-3xl glass max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center">
-                    <h3 class="text-xl font-bold mb-4">สร้างภาพ Instagram Story</h3>
-                    <canvas id="story-canvas" width="1080" height="1920" class="w-64 h-[450px] rounded-2xl shadow-xl mb-4 border border-slate-300"></canvas>
-                    <div class="flex space-x-3 w-full">
-                        <button onclick="downloadStory()" class="flex-1 py-3 rounded-xl bg-violet-600 text-white font-bold">ดาวน์โหลดภาพ</button>
-                        <button onclick="closeModal()" class="px-5 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 font-bold">ปิด</button>
-                    </div>
-                </div>
-            `;
-            drawStoryCanvas(decodeURIComponent(text));
-        };
-
-        function drawStoryCanvas(text) {
-            const canvas = document.getElementById('story-canvas');
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createLinearGradient(0, 0, 1080, 1920);
-            grad.addColorStop(0, '#7c3aed');
-            grad.addColorStop(1, '#db2777');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 1080, 1920);
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-            ctx.roundRect(140, 500, 800, 920, 40);
-            ctx.fill();
-
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 50px "Plus Jakarta Sans", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('💬 ข้อความนิรนาม', 540, 620);
-
-            ctx.font = '40px "Plus Jakarta Sans", sans-serif';
-            wrapText(ctx, text, 540, 800, 700, 60);
-        }
-
-        function wrapText(context, text, x, y, maxWidth, lineHeight) {
-            const words = text.split(' ');
-            let line = '';
-            for(let n = 0; n < words.length; n++) {
-                const testLine = line + words[n] + ' ';
-                const metrics = context.measureText(testLine);
-                const testWidth = metrics.width;
-                if (testWidth > maxWidth && n > 0) {
-                    context.fillText(line, x, y);
-                    line = words[n] + ' ';
-                    y += lineHeight;
-                } else {
-                    line = testLine;
-                }
-            }
-            context.fillText(line, x, y);
-        }
-
-        window.downloadStory = function() {
-            const canvas = document.getElementById('story-canvas');
-            const link = document.createElement('a');
-            link.download = 'vortex-story.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            window.showToast('ดาวน์โหลดภาพ Story สำเร็จ!', 'success');
-        };
-
-        window.closeModal = function() {
-            const modal = document.getElementById('modal-container');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        };
-
-        window.openReplyModal = function(msgId) {
-            const modal = document.getElementById('modal-container');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modal.innerHTML = `
-                <div class="p-6 rounded-3xl glass max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800">
-                    <h3 class="text-xl font-bold mb-4">ตอบกลับข้อความ</h3>
-                    <form onsubmit="handleReplySubmit(event, '${msgId}')" class="space-y-4">
-                        <textarea id="reply-content" rows="4" required placeholder="พิมพ์คำตอบของคุณ..." class="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 outline-none text-sm"></textarea>
-                        <button type="submit" class="w-full py-3.5 rounded-2xl bg-violet-600 text-white font-bold">ส่งคำตอบ</button>
-                        <button type="button" onclick="closeModal()" class="w-full py-3.5 rounded-2xl bg-slate-200 dark:bg-slate-800 font-bold">ยกเลิก</button>
-                    </form>
-                </div>
-            `;
-        };
-
-        window.handleReplySubmit = async function(e, msgId) {
-            e.preventDefault();
-            const content = document.getElementById('reply-content').value.trim();
-            try {
-                const fn = httpsCallable(functions, 'submitReply');
-                await fn({ messageId: msgId, content });
-                window.showToast('ส่งคำตอบสำเร็จ!', 'success');
-                closeModal();
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        window.publishToWall = async function(msgId) {
-            try {
-                const fn = httpsCallable(functions, 'publishWallMessage');
-                await fn({ messageId: msgId });
-                window.showToast('เผยแพร่ลง Public Wall สำเร็จ!', 'success');
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        // --- ANALYTICS VIEW ---
-        function renderAnalyticsView() {
-            document.getElementById('app').innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold">สถิติและ Analytics</h2>
-                        <button onclick="router.navigate('home')" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-sm font-bold">← กลับ</button>
-                    </div>
-                    <div class="p-6 rounded-3xl glass shadow-xl border border-slate-200 dark:border-slate-800">
-                        <canvas id="analytics-chart" class="w-full h-80"></canvas>
-                    </div>
-                </div>
-            `;
-            const ctx = document.getElementById('analytics-chart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'],
-                    datasets: [{ label: 'จำนวนข้อความที่ได้รับ', data: [5, 12, 8, 15, 20, 25, 18], backgroundColor: '#8b5cf6' }]
-                }
-            });
-        }
-
-        // --- SETTINGS VIEW ---
-        function renderSettingsView() {
-            const p = window.currentProfile;
-            document.getElementById('app').innerHTML = `
-                <div class="max-w-md mx-auto p-8 rounded-3xl glass shadow-2xl border border-slate-200 dark:border-slate-800">
-                    <h2 class="text-2xl font-bold mb-6">ตั้งค่าโปรไฟล์</h2>
-                    <form onsubmit="handleUpdateProfile(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase mb-1">ชื่อที่แสดง</label>
-                            <input type="text" id="set-displayname" value="${p.displayName}" class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 outline-none text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase mb-1">Bio</label>
-                            <textarea id="set-bio" rows="3" class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 outline-none text-sm resize-none">${p.bio || ''}</textarea>
-                        </div>
-                        <button type="submit" class="w-full py-4 rounded-2xl bg-violet-600 text-white font-bold">บันทึกการเปลี่ยนแปลง</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        window.handleUpdateProfile = async function(e) {
-            e.preventDefault();
-            const displayName = document.getElementById('set-displayname').value.trim();
-            const bio = document.getElementById('set-bio').value.trim();
-            try {
-                await updateDoc(doc(db, 'users', window.currentUser.uid), { displayName, bio });
-                window.currentProfile.displayName = displayName;
-                window.currentProfile.bio = bio;
-                window.showToast('อัปเดตโปรไฟล์สำเร็จ!', 'success');
-                router.navigate('home');
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        // --- PUBLIC WALL VIEW ---
-        function renderPublicWallView() {
-            document.getElementById('app').innerHTML = `
-                <div class="max-w-3xl mx-auto">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold">Public Wall 🌟</h2>
-                        <button onclick="router.navigate('home')" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-sm font-bold">← กลับ</button>
-                    </div>
-                    <div id="wall-messages" class="space-y-4">
-                        <div class="text-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div></div>
-                    </div>
-                </div>
-            `;
-            loadPublicWall();
-        }
-
-        async function loadPublicWall() {
-            const q = query(collection(db, 'publicWall'));
-            const snap = await getDocs(q);
-            const container = document.getElementById('wall-messages');
-            if (snap.empty) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-500 p-8 rounded-3xl glass">ยังไม่มีข้อความบน Public Wall</div>`;
-                return;
-            }
-            let html = '';
-            snap.forEach(docSnap => {
-                const w = docSnap.data();
-                html += `
-                    <div class="p-6 rounded-3xl glass shadow-xl border border-slate-200 dark:border-slate-800">
-                        <p class="text-lg font-medium mb-4">${w.content}</p>
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>เผยแพร่เมื่อ: ${w.publishedAt ? new Date(w.publishedAt.toDate()).toLocaleString() : 'เมื่อสักครู่'}</span>
-                            <button onclick="toggleReaction('${docSnap.id}')" class="px-3.5 py-2 rounded-xl bg-violet-500/10 text-violet-600 font-bold">❤️ ${w.reactionsCount || 0}</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        window.toggleReaction = async function(wallId) {
-            try {
-                const fn = httpsCallable(functions, 'toggleReaction');
-                await fn({ wallId });
-                loadPublicWall();
-            } catch (err) {
-                window.showToast(err.message, 'error');
-            }
-        };
-
-        window.addEventListener('DOMContentLoaded', () => router.resolve());
-    </script>
+function toast(message,type="info"){
+const el=document.createElement("div");
+el.className="toast "+type;el.textContent=message;
+$("toastRoot").append(el);
+setTimeout(()=>el.remove(),5500);
+}
+function errorMessage(e){
+const map={
+"auth/invalid-credential":"อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+"auth/email-already-in-use":"อีเมลนี้ถูกใช้งานแล้ว",
+"auth/weak-password":"รหัสผ่านไม่ปลอดภัยเพียงพอ",
+"auth/too-many-requests":"มีคำขอมากเกินไป",
+"auth/requires-recent-login":"กรุณาเข้าสู่ระบบใหม่",
+"permission-denied":"ไม่มีสิทธิ์เข้าถึงข้อมูล",
+"unavailable":"บริการไม่พร้อมใช้งาน"
+};
+return e.userMessage||map[e.code]||"ไม่สามารถดำเนินการได้ กรุณาลองอีกครั้ง";
+}
+function fail(e){console.error(e.code||e.message);toast(errorMessage(e),"error")}
+function busy(value){
+S.busy=value;
+document.querySelectorAll("[data-action]").forEach(b=>b.disabled=value);
+}
+async function execute(fn){
+if(S.busy)return;
+busy(true);
+try{await fn()}catch(e){fail(e)}finally{busy(false)}
+}
+async function api(path,data={},privateCall=false){
+if(!WORKER_BASE_URL)throw Object.assign(new Error("Worker URL missing"),{
+userMessage:"ยังไม่ได้ตั้งค่า Cloudflare Worker URL"
+});
+const headers={"Content-Type":"application/json"};
+if(privateCall){
+if(!auth.currentUser)throw Object.assign(new Error("Not authenticated"),{userMessage:"กรุณาเข้าสู่ระบบ"});
+headers.Authorization="Bearer "+await auth.currentUser.getIdToken();
+}
+const response=await fetch(WORKER_BASE_URL.replace(/\/$/,"")+path,{
+method:"POST",headers,body:JSON.stringify(data)
+});
+const result=await response.json().catch(()=>({}));
+if(!response.ok||result.success===false)
+throw Object.assign(new Error(result.code||"API error"),{
+userMessage:result.message||"คำขอไม่สำเร็จ"
+});
+return result;
+}
+function senderToken(){
+let token=localStorage.getItem("wh-sender-token");
+if(!token){
+token=crypto.randomUUID();
+localStorage.setItem("wh-sender-token",token);
+}
+return token;
+}
+function avatar(profile,size=90){
+const url=safeURL(profile?.photoURL);
+if(url)return `<img class="avatar" width="${size}" height="${size}" style="width:${size}px;height:${size}px" src="${escapeHTML(url)}" alt="Profile picture">`;
+return `<div class="avatar avatar-fallback" style="width:${size}px;height:${size}px">${escapeHTML((profile?.displayName||"?").charAt(0).toUpperCase())}</div>`;
+}
+function openModal(content){
+$("modalRoot").innerHTML=`<div class="modal-layer"><section class="modal" role="dialog" aria-modal="true"><div class="row between"><strong>Whispr</strong><button class="btn small outline" id="closeModal">ปิด</button></div><hr class="divider">${content}</section></div>`;
+$("closeModal").onclick=closeModal;
+}
+function closeModal(){$("modalRoot").replaceChildren()}
+function ask(title,message,callback){
+openModal(`<h2>${escapeHTML(title)}</h2><p>${escapeHTML(message)}</p><div class="row"><button class="btn outline" id="cancelAsk">ยกเลิก</button><button class="btn danger" id="confirmAsk" data-action>ยืนยัน</button></div>`);
+$("cancelAsk").onclick=closeModal;
+$("confirmAsk").onclick=()=>execute(async()=>{await callback();closeModal()});
+}
+function setTheme(theme){
+S.theme=theme;localStorage.setItem("wh-theme",theme);
+document.documentElement.dataset.theme=theme;
+}
+function navigate(route){
+if(route==="dashboard"&&!S.user)route="login";
+S.route=route;
+history.pushState({route},"",route==="home"?"./":route==="dashboard"?"?dashboard=1":"?view="+encodeURIComponent(route));
+render();
+}
+function initRoute(){
+const q=new URLSearchParams(location.search);
+if(q.has("u")){S.route="public";return}
+S.route=q.has("dashboard")?"dashboard":q.get("view")||"home";
+}
+function render(){
+$("accountBtn").textContent=S.user?"Dashboard":tr("login");
+$("accountBtn").onclick=()=>navigate(S.user?"dashboard":"login");
+$("langBtn").textContent=S.lang==="th"?"EN":"TH";
+if(S.route==="public"){renderPublic();return}
+if(S.route==="login"){renderLogin();return}
+if(S.route==="register"){renderRegister();return}
+if(S.route==="dashboard"){renderDashboard();return}
+renderHome();
+}
+function renderHome(){
+$("app").innerHTML=`
+<div class="hero">
+<h1>ข้อความที่จริงใจ<br><span class="gradient">ไม่จำเป็นต้องมีชื่อผู้ส่ง</span></h1>
+<p>สร้างพื้นที่สำหรับรับคำถาม ความคิดเห็น และข้อความดี ๆ จากผู้คนรอบตัวคุณ</p>
+<button class="btn primary" id="startBtn">${S.user?"เปิด Dashboard":"สร้างลิงก์รับข้อความฟรี"}</button>
+</div>
+<div class="grid">
+<div class="card"><h3>Anonymous Inbox</h3><p class="muted">รับข้อความโดยไม่แสดงชื่อผู้ส่ง</p></div>
+<div class="card"><h3>Story Creator</h3><p class="muted">สร้างภาพข้อความสำหรับแชร์บนโซเชียล</p></div>
+<div class="card"><h3>Public Wall</h3><p class="muted">เลือกเผยแพร่ข้อความที่คุณต้องการ</p></div>
+</div>`;
+$("startBtn").onclick=()=>navigate(S.user?"dashboard":"register");
+}
+function renderLogin(){
+$("app").innerHTML=`
+<div class="card auth"><h2>${tr("login")}</h2>
+<form id="loginForm">
+<div class="field"><label>อีเมล</label><input class="input" type="email" name="email" autocomplete="email" required></div>
+<div class="field"><label>รหัสผ่าน</label><input class="input" type="password" name="password" autocomplete="current-password" required></div>
+<button class="btn primary full" data-action>${tr("login")}</button>
+</form>
+<p><a href="#" id="forgotBtn">ลืมรหัสผ่าน?</a></p>
+<p>ยังไม่มีบัญชี? <a href="#" id="registerLink">${tr("register")}</a></p>
+</div>`;
+$("loginForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+const f=new FormData(e.target);
+await signInWithEmailAndPassword(auth,f.get("email"),f.get("password"));
+navigate("dashboard");
+});
+};
+$("forgotBtn").onclick=e=>{
+e.preventDefault();
+openModal(`<h2>รีเซ็ตรหัสผ่าน</h2><form id="resetForm"><div class="field"><label>อีเมล</label><input class="input" name="email" type="email" required></div><button class="btn primary" data-action>ส่งลิงก์รีเซ็ต</button></form>`);
+$("resetForm").onsubmit=ev=>{
+ev.preventDefault();
+execute(async()=>{
+await sendPasswordResetEmail(auth,new FormData(ev.target).get("email"));
+toast("ส่งคำขอรีเซ็ตรหัสผ่านแล้ว","success");closeModal();
+});
+};
+};
+$("registerLink").onclick=e=>{e.preventDefault();navigate("register")};
+}
+function renderRegister(){
+$("app").innerHTML=`
+<div class="card auth"><h2>สร้างบัญชี Whispr</h2>
+<form id="registerForm">
+<div class="field"><label>ชื่อที่แสดง</label><input class="input" name="name" maxlength="60" required></div>
+<div class="field"><label>Username</label><input class="input" name="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" required></div>
+<div class="field"><label>อีเมล</label><input class="input" name="email" type="email" required></div>
+<div class="field"><label>รหัสผ่าน</label><input class="input" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
+<button class="btn primary full" data-action>สมัครสมาชิก</button>
+</form>
+<p>มีบัญชีแล้ว? <a href="#" id="loginLink">เข้าสู่ระบบ</a></p></div>`;
+$("loginLink").onclick=e=>{e.preventDefault();navigate("login")};
+$("registerForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+const f=new FormData(e.target);
+const username=String(f.get("username")).toLowerCase();
+const credential=await createUserWithEmailAndPassword(auth,f.get("email"),f.get("password"));
+await updateProfile(credential.user,{displayName:String(f.get("name"))});
+try{
+await api("/users/register",{
+username,displayName:String(f.get("name"))
+},true);
+}catch(error){
+await credential.user.delete().catch(()=>{});
+throw error;
+}
+await sendEmailVerification(credential.user);
+toast("สมัครสำเร็จ กรุณายืนยันอีเมล","success");
+navigate("dashboard");
+});
+};
+}
+async function loadProfile(){
+if(!auth.currentUser){S.profile=null;return}
+const result=await api("/users/me",{},true);
+S.profile=result.profile||null;
+}
+function dashboardMenu(){
+const tabs=[
+["inbox",tr("inbox")],["wall",tr("wall")],
+["analytics",tr("stats")],["blocks",tr("blocks")],
+["settings",tr("settings")]
+];
+return tabs.map(([id,label])=>`<button class="menu ${S.tab===id?"active":""}" data-tab="${id}">${label}</button>`).join("");
+}
+function renderDashboard(){
+if(!S.user){navigate("login");return}
+$("app").innerHTML=`
+<div class="cols">
+<aside class="card sidebar">
+<div class="row">${avatar(S.profile,48)}<div><strong>${escapeHTML(S.profile?.displayName||S.user.displayName||"Member")}</strong><br><small>@${escapeHTML(S.profile?.username||"")}</small></div></div>
+<hr class="divider">
+${dashboardMenu()}
+<hr class="divider">
+<button class="menu" id="logoutBtn">${tr("logout")}</button>
+</aside>
+<section id="panel"><div class="empty">กำลังโหลด...</div></section>
+</div>`;
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+S.tab=b.dataset.tab;renderDashboard();
+});
+$("logoutBtn").onclick=()=>execute(async()=>{await signOut(auth);navigate("home")});
+if(S.tab==="inbox")loadInbox();
+if(S.tab==="wall")loadWallDashboard();
+if(S.tab==="analytics")loadAnalytics();
+if(S.tab==="blocks")loadBlocks();
+if(S.tab==="settings")renderSettings();
+}
+function messageCard(m){
+const id=escapeHTML(m.id);
+const image=m.imageURL?safeURL(m.imageURL):"";
+const audio=m.audioURL?safeURL(m.audioURL):"";
+return `<article class="card message">
+<div class="row between"><span class="tag">${m.read?"อ่านแล้ว":"ข้อความใหม่"}</span><small>${escapeHTML(dateText(m.createdAt))}</small></div>
+<p>${escapeHTML(m.text||"ข้อความเสียงหรือรูปภาพ")}</p>
+${m.hint?`<small>${escapeHTML(m.hint)} · ข้อมูลโดยประมาณ</small>`:""}
+${image?`<div class="reveal"><img src="${escapeHTML(image)}" loading="lazy" alt="ภาพแนบ"><button class="revealBtn" aria-label="แตะค้างเพื่อดูภาพ">แตะค้างเพื่อดูภาพ</button></div>`:""}
+${audio?`<audio controls preload="none" src="${escapeHTML(audio)}"></audio>`:""}
+${m.reply?`<p><strong>คำตอบ:</strong> ${escapeHTML(m.reply)}</p>`:""}
+<div class="row" style="margin-top:15px">
+<button class="btn small outline" data-msg="read" data-id="${id}">อ่านแล้ว</button>
+<button class="btn small outline" data-msg="pin" data-id="${id}">${m.pinned?"เลิกปักหมุด":"ปักหมุด"}</button>
+<button class="btn small outline" data-msg="reply" data-id="${id}">ตอบกลับ</button>
+<button class="btn small outline" data-msg="story" data-id="${id}">สร้าง Story</button>
+<button class="btn small outline" data-msg="publish" data-id="${id}">Publish</button>
+<button class="btn small outline" data-msg="archive" data-id="${id}">Archive</button>
+<button class="btn small outline" data-msg="block" data-id="${id}">บล็อก</button>
+<button class="btn small outline" data-msg="report" data-id="${id}">รายงาน</button>
+<button class="btn small danger" data-msg="delete" data-id="${id}">ลบ</button>
+</div></article>`;
+}
+async function loadInbox(reset=true){
+if(reset){S.messages=[];S.cursor=null}
+$("panel").innerHTML=`
+<div class="row between"><h2>กล่องข้อความ</h2><button class="btn primary" id="copyLink">คัดลอกลิงก์</button></div>
+<div class="card">
+<div class="row">
+<input id="searchBox" class="input" style="flex:2;min-width:160px" placeholder="ค้นหาข้อความ" value="${escapeHTML(S.search)}">
+<select id="filterBox" class="input" style="flex:1">
+<option value="all">ทั้งหมด</option><option value="unread">ยังไม่อ่าน</option>
+<option value="pinned">ปักหมุด</option><option value="archived">Archive</option>
+</select>
+</div></div>
+<div id="messageList" class="empty">กำลังโหลด...</div>
+<button id="loadMore" class="btn outline full hidden">โหลดเพิ่มเติม</button>`;
+$("copyLink").onclick=()=>copyLink();
+$("filterBox").value=S.filter;
+$("filterBox").onchange=e=>{S.filter=e.target.value;showMessages()};
+$("searchBox").oninput=e=>{S.search=e.target.value;showMessages()};
+$("loadMore").onclick=()=>execute(()=>fetchMessages(false));
+await fetchMessages(true).catch(fail);
+}
+async function fetchMessages(reset){
+if(reset){S.messages=[];S.cursor=null}
+const result=await api("/messages/list",{
+cursor:S.cursor,pageSize:20
+},true);
+S.messages.push(...(result.messages||[]));
+S.cursor=result.nextCursor||null;
+showMessages();
+$("loadMore").classList.toggle("hidden",!S.cursor);
+}
+function showMessages(){
+const items=S.messages.filter(m=>{
+if(S.filter==="unread"&&m.read)return false;
+if(S.filter==="pinned"&&!m.pinned)return false;
+if(S.filter==="archived"&&!m.archived)return false;
+if(S.filter!=="archived"&&m.archived)return false;
+return String(m.text||"").toLowerCase().includes(S.search.toLowerCase());
+});
+$("messageList").className="";
+$("messageList").innerHTML=items.length?items.map(messageCard).join(""):`<div class="empty">ไม่พบข้อความ</div>`;
+document.querySelectorAll("[data-msg]").forEach(b=>b.onclick=()=>handleMessage(b.dataset.msg,b.dataset.id));
+document.querySelectorAll(".revealBtn").forEach(button=>{
+const card=button.parentElement;
+const open=()=>card.classList.add("open");
+const close=()=>card.classList.remove("open");
+button.addEventListener("pointerdown",open);
+button.addEventListener("pointerup",close);
+button.addEventListener("pointercancel",close);
+button.addEventListener("pointerleave",close);
+button.addEventListener("focusout",close);
+button.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();open()}});
+button.addEventListener("keyup",close);
+});
+}
+function handleMessage(action,id){
+const m=S.messages.find(x=>x.id===id);
+if(!m)return;
+if(action==="story"){openStory(m);return}
+if(action==="reply"){openReply(m);return}
+if(action==="publish"){previewPublish(m);return}
+if(action==="report"){reportContent("message",id);return}
+if(action==="delete"){
+ask("ลบข้อความ","ข้อความและไฟล์แนบที่เกี่ยวข้องจะถูกจัดการตามนโยบายการลบ",async()=>{
+await api("/messages/delete",{messageId:id},true);
+await fetchMessages(true);
+});return;
+}
+if(action==="block"){
+ask("บล็อกผู้ส่ง","การบล็อก Token ไม่สามารถป้องกันการเปลี่ยนเบราว์เซอร์หรืออุปกรณ์ได้ทั้งหมด",async()=>{
+await api("/messages/block",{messageId:id},true);
+toast("บล็อกแหล่งส่งแล้ว","success");
+});return;
+}
+execute(async()=>{
+await api("/messages/update",{
+messageId:id,action
+},true);
+await fetchMessages(true);
+});
+}
+function openReply(m){
+openModal(`<h2>ตอบกลับข้อความ</h2><p>${escapeHTML(m.text||"ข้อความเสียง")}</p>
+<form id="replyForm"><textarea class="input" name="reply" maxlength="1000" required>${escapeHTML(m.reply||"")}</textarea>
+<div class="row"><button class="btn primary" data-action>บันทึกคำตอบ</button>
+${m.reply?`<button type="button" class="btn danger" id="removeReply">ลบคำตอบ</button>`:""}</div></form>`);
+$("replyForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+await api("/messages/reply",{messageId:m.id,text:new FormData(e.target).get("reply")},true);
+closeModal();await fetchMessages(true);
+});
+};
+if($("removeReply"))$("removeReply").onclick=()=>ask("ลบคำตอบ","ยืนยันการลบคำตอบ",async()=>{
+await api("/messages/reply/delete",{messageId:m.id},true);
+closeModal();await fetchMessages(true);
+});
+}
+function previewPublish(m){
+openModal(`<h2>ตรวจสอบก่อนเผยแพร่</h2>
+<div class="card"><p>${escapeHTML(m.text||"")}</p>${m.reply?`<p><strong>คำตอบ:</strong> ${escapeHTML(m.reply)}</p>`:""}</div>
+<p class="muted">ข้อความนี้จะปรากฏต่อสาธารณะหลังคุณยืนยัน โดยไม่เผยแพร่คำใบ้หรือข้อมูลผู้ส่ง</p>
+<button class="btn primary" id="confirmPublish" data-action>ยืนยัน Publish</button>`);
+$("confirmPublish").onclick=()=>execute(async()=>{
+await api("/wall/publish",{messageId:m.id},true);
+closeModal();toast("เผยแพร่แล้ว","success");
+});
+}
+function reportContent(type,id){
+openModal(`<h2>รายงานเนื้อหา</h2><form id="reportForm">
+<div class="field"><label>เหตุผล</label><select class="input" name="reason">
+<option value="harassment">การคุกคาม</option>
+<option value="spam">สแปม</option>
+<option value="privacy">ละเมิดความเป็นส่วนตัว</option>
+<option value="other">อื่น ๆ</option>
+</select></div>
+<div class="field"><label>รายละเอียด</label><textarea class="input" name="details" maxlength="500"></textarea></div>
+<button class="btn primary" data-action>ส่งรายงาน</button></form>`);
+$("reportForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+const f=new FormData(e.target);
+await api("/reports/create",{
+type,contentId:id,reason:f.get("reason"),details:f.get("details")
+},Boolean(S.user));
+closeModal();toast("ส่งรายงานแล้ว","success");
+});
+};
+}
+async function loadWallDashboard(){
+$("panel").innerHTML=`<h2>Public Wall</h2><div id="wallItems" class="empty">กำลังโหลด...</div>`;
+try{
+const result=await api("/wall/mine",{},true);
+const items=result.items||[];
+$("wallItems").className="";
+$("wallItems").innerHTML=items.length?items.map(w=>`
+<div class="card message"><p>${escapeHTML(w.text)}</p>
+${w.reply?`<p><strong>ตอบ:</strong> ${escapeHTML(w.reply)}</p>`:""}
+<small>Reactions: ${Number(w.reactions||0)}</small>
+<div class="row"><button class="btn small outline" data-wall-hide="${escapeHTML(w.id)}">ซ่อน</button>
+<button class="btn small danger" data-wall-delete="${escapeHTML(w.id)}">ลบ</button></div></div>`).join(""):`<div class="empty">ยังไม่มีข้อความบน Public Wall</div>`;
+document.querySelectorAll("[data-wall-hide]").forEach(b=>b.onclick=()=>execute(async()=>{
+await api("/wall/hide",{wallId:b.dataset.wallHide},true);await loadWallDashboard();
+}));
+document.querySelectorAll("[data-wall-delete]").forEach(b=>b.onclick=()=>ask("ลบจาก Wall","ยืนยันการลบ",async()=>{
+await api("/wall/delete",{wallId:b.dataset.wallDelete},true);await loadWallDashboard();
+}));
+}catch(e){fail(e)}
+}
+async function loadBlocks(){
+$("panel").innerHTML=`<h2>ผู้ส่งที่ถูกบล็อก</h2><div id="blocksList" class="empty">กำลังโหลด...</div>`;
+try{
+const result=await api("/blocks/list",{},true);
+const blocks=result.blocks||[];
+$("blocksList").className="";
+$("blocksList").innerHTML=blocks.length?blocks.map(b=>`
+<div class="card message row between"><span>บล็อกเมื่อ ${escapeHTML(dateText(b.createdAt))}</span>
+<button class="btn small outline" data-unblock="${escapeHTML(b.id)}">ยกเลิกบล็อก</button></div>`).join(""):`<div class="empty">ไม่มีรายการบล็อก</div>`;
+document.querySelectorAll("[data-unblock]").forEach(b=>b.onclick=()=>execute(async()=>{
+await api("/blocks/remove",{blockId:b.dataset.unblock},true);
+await loadBlocks();
+}));
+}catch(e){fail(e)}
+}
+function renderSettings(){
+const p=S.profile||{};
+$("panel").innerHTML=`
+<h2>ตั้งค่าโปรไฟล์</h2>
+<div class="card">
+<div class="row">${avatar(p)}<div><strong>${escapeHTML(p.displayName||"")}</strong><br><small>@${escapeHTML(p.username||"")}</small></div></div>
+<form id="profileForm">
+<div class="field"><label>ชื่อที่แสดง</label><input class="input" name="displayName" maxlength="60" value="${escapeHTML(p.displayName||"")}"></div>
+<div class="field"><label>Username</label><input class="input" name="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" value="${escapeHTML(p.username||"")}"></div>
+<div class="field"><label>Bio</label><textarea class="input" name="bio" maxlength="300">${escapeHTML(p.bio||"")}</textarea></div>
+<div class="field"><label>รูปโปรไฟล์</label><input class="input" id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp"><img id="avatarPreview" class="image-preview hidden" alt="Preview"></div>
+<div class="field"><label>ธีมโปรไฟล์</label><select class="input" name="profileTheme"><option value="violet">Violet</option><option value="midnight">Midnight</option><option value="pastel">Pastel</option></select></div>
+<div class="field"><label><input type="checkbox" name="acceptsMessages" ${p.acceptsMessages!==false?"checked":""}> เปิดรับข้อความ</label></div>
+<div class="field"><label><input type="checkbox" name="wallEnabled" ${p.wallEnabled!==false?"checked":""}> เปิด Public Wall</label></div>
+<div class="field"><label><input type="checkbox" name="showHints" ${p.showHints?"checked":""}> แสดงคำใบ้ผู้ส่ง</label></div>
+<div class="field"><label>การมองเห็นโปรไฟล์</label><select class="input" name="visibility"><option value="public">สาธารณะ</option><option value="unlisted">เฉพาะผู้มีลิงก์</option></select></div>
+<button class="btn primary" data-action>บันทึกการตั้งค่า</button>
+</form>
+<hr class="divider">
+<div class="row"><button class="btn outline" id="verifyEmail">ส่งอีเมลยืนยัน</button>
+<button class="btn outline" id="removeAvatar">ลบรูปโปรไฟล์</button>
+<button class="btn danger" id="deleteAccount">ลบบัญชี</button></div>
+</div>`;
+$("profileForm").elements.profileTheme.value=p.profileTheme||"violet";
+$("profileForm").elements.visibility.value=p.profileVisibility||"public";
+$("avatarFile").onchange=e=>{
+const file=e.target.files[0];
+if(!file)return;
+if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>MAX_IMAGE){
+toast("รองรับ JPG, PNG, WebP ขนาดไม่เกิน 5 MB","error");e.target.value="";return;
+}
+const reader=new FileReader();
+reader.onload=()=>{$("avatarPreview").src=reader.result;$("avatarPreview").classList.remove("hidden")};
+reader.readAsDataURL(file);
+};
+$("profileForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+const f=new FormData(e.target);
+let photoURL=p.photoURL||"";
+const file=$("avatarFile").files[0];
+if(file){
+const uploaded=await uploadFile(file,"avatar");
+photoURL=uploaded.url;
+}
+await api("/users/profile",{
+displayName:f.get("displayName"),
+username:String(f.get("username")).toLowerCase(),
+bio:f.get("bio"),photoURL,
+profileTheme:f.get("profileTheme"),
+profileVisibility:f.get("visibility"),
+acceptsMessages:f.has("acceptsMessages"),
+wallEnabled:f.has("wallEnabled"),
+showHints:f.has("showHints")
+},true);
+await loadProfile();toast("บันทึกโปรไฟล์แล้ว","success");
+renderDashboard();
+});
+};
+$("verifyEmail").onclick=()=>execute(async()=>{
+await sendEmailVerification(auth.currentUser);
+toast("ส่งอีเมลยืนยันแล้ว","success");
+});
+$("removeAvatar").onclick=()=>ask("ลบรูปโปรไฟล์","ต้องการลบรูปโปรไฟล์หรือไม่?",async()=>{
+await api("/users/avatar/remove",{},true);
+await loadProfile();renderDashboard();
+});
+$("deleteAccount").onclick=deleteAccountFlow;
+}
+function deleteAccountFlow(){
+openModal(`<h2>ลบบัญชีถาวร</h2><p>การลบบัญชีจะลบข้อมูลที่เกี่ยวข้องตามนโยบายของระบบ</p>
+<form id="deleteForm"><div class="field"><label>กรอกรหัสผ่านเพื่อยืนยัน</label>
+<input class="input" type="password" name="password" required></div>
+<button class="btn danger" data-action>ยืนยันลบบัญชี</button></form>`);
+$("deleteForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+const password=new FormData(e.target).get("password");
+const user=auth.currentUser;
+const credential=EmailAuthProvider.credential(user.email,password);
+await reauthenticateWithCredential(user,credential);
+await api("/users/delete",{},true);
+await deleteUser(user);
+closeModal();navigate("home");
+toast("ลบบัญชีแล้ว","success");
+});
+};
+}
+async function uploadFile(file,kind,recipient=""){
+const types=kind==="audio"
+?["audio/webm","audio/ogg","audio/mp4","audio/wav","audio/mpeg"]
+:["image/jpeg","image/png","image/webp"];
+if(!types.includes(file.type))throw Object.assign(new Error("Type"),{userMessage:"ประเภทไฟล์ไม่รองรับ"});
+if(file.size>(kind==="audio"?MAX_AUDIO:MAX_IMAGE))
+throw Object.assign(new Error("Size"),{userMessage:"ไฟล์ใหญ่เกินกำหนด"});
+const session=await api("/upload/authorize",{
+kind,recipient,size:file.size,mimeType:file.type
+},kind==="avatar");
+const form=new FormData();
+Object.entries(session.fields||{}).forEach(([k,v])=>form.append(k,v));
+form.append("file",file);
+const response=await fetch(session.uploadUrl,{method:"POST",body:form});
+if(!response.ok)throw new Error("Upload failed");
+const uploaded=await response.json();
+return await api("/upload/finalize",{
+uploadId:session.uploadId,
+fileId:uploaded.fileId||uploaded.data?.fileId,
+kind
+},kind==="avatar");
+}
+async function loadPublic(username){
+try{
+const result=await api("/public/profile",{username});
+S.publicProfile=result.profile;
+S.wall=result.wall||[];
+renderPublic();
+}catch(e){
+$("app").innerHTML=`<div class="empty">ไม่พบโปรไฟล์หรือไม่สามารถโหลดได้</div>`;
+fail(e);
+}
+}
+function renderPublic(){
+const p=S.publicProfile;
+if(!p){
+$("app").innerHTML=`<div class="empty">กำลังโหลดโปรไฟล์...</div>`;
+return;
+}
+$("app").innerHTML=`
+<div class="card" style="max-width:700px;margin:auto">
+<div style="text-align:center">${avatar(p)}
+<h1>${escapeHTML(p.displayName||p.username)}</h1>
+<p class="muted">@${escapeHTML(p.username)}</p>
+<p>${escapeHTML(p.bio||"")}</p></div>
+<hr class="divider">
+${p.acceptsMessages===false?`<div class="empty">บัญชีนี้ปิดรับข้อความชั่วคราว</div>`:`
+<form id="sendForm">
+<div class="field"><label>ส่งข้อความนิรนาม</label>
+<textarea class="input" name="text" maxlength="${MAX_TEXT}" placeholder="เขียนสิ่งที่อยากบอก..." id="sendText"></textarea>
+<small id="counter">0 / ${MAX_TEXT}</small></div>
+<div class="row">
+<select class="input" id="questionCategory" style="flex:1">
+<option value="general">ทั่วไป</option><option value="fun">สนุกสนาน</option>
+<option value="friendship">มิตรภาพ</option><option value="memories">ความทรงจำ</option>
+<option value="favorites">ความชอบ</option>
+</select>
+<button type="button" class="btn outline" id="randomBtn">สุ่มคำถาม</button>
+</div>
+<div class="field"><label>แนบรูปภาพ</label><input class="input" type="file" id="messageImage" accept="image/jpeg,image/png,image/webp">
+<img id="imagePreview" class="image-preview hidden" alt="ภาพก่อนส่ง">
+<button type="button" class="btn small outline hidden" id="clearImage">ลบรูป</button></div>
+<div class="field"><label>ข้อความเสียง</label>
+<div class="row"><button type="button" class="btn outline" id="recordBtn">เริ่มบันทึกเสียง</button>
+<button type="button" class="btn outline" id="stopBtn" disabled>หยุด</button>
+<button type="button" class="btn outline" id="clearAudio" disabled>ลบเสียง</button>
+<span id="recordTime">00:00</span></div>
+<audio id="audioPreview" controls class="hidden"></audio>
+<select id="voiceEffect" class="input" style="margin-top:10px">
+<option value="original">Original Voice</option>
+<option value="lower">Lower Pitch</option>
+<option value="higher">Higher Pitch</option>
+<option value="soft">Soft Voice</option>
+<option value="filtered">Filtered Voice</option>
+</select></div>
+<button class="btn primary full" data-action>ส่งข้อความนิรนาม</button>
+</form>`}
+</div>
+${p.wallEnabled===false?"":`<section style="max-width:700px;margin:30px auto"><h2>Public Wall</h2><div id="publicWall"></div></section>`}`;
+if(p.acceptsMessages!==false)bindSend(p);
+renderPublicWall();
+}
+function nextQuestion(category){
+const bank=S.lang==="th"?questions:englishQuestions;
+const list=bank[category]||bank.general;
+const key=S.lang+category;
+if(!S.questions[key]?.length){
+S.questions[key]=list.map((_,i)=>i);
+}
+const pool=S.questions[key];
+const index=Math.floor(Math.random()*pool.length);
+const question=list[pool.splice(index,1)[0]];
+return question;
+}
+function bindSend(p){
+$("sendText").oninput=()=>{
+$("counter").textContent=$("sendText").value.length+" / "+MAX_TEXT;
+};
+$("randomBtn").onclick=()=>{
+$("sendText").value=nextQuestion($("questionCategory").value);
+$("sendText").dispatchEvent(new Event("input"));
+};
+$("messageImage").onchange=e=>{
+const file=e.target.files[0];
+if(!file)return;
+if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>MAX_IMAGE){
+toast("รูปภาพไม่รองรับหรือมีขนาดใหญ่เกินไป","error");return;
+}
+S.image=file;
+const reader=new FileReader();
+reader.onload=()=>{$("imagePreview").src=reader.result;$("imagePreview").classList.remove("hidden");$("clearImage").classList.remove("hidden")};
+reader.readAsDataURL(file);
+};
+$("clearImage").onclick=()=>{
+S.image=null;$("messageImage").value="";
+$("imagePreview").classList.add("hidden");
+$("clearImage").classList.add("hidden");
+};
+$("recordBtn").onclick=startRecording;
+$("stopBtn").onclick=stopRecording;
+$("clearAudio").onclick=clearAudio;
+$("sendForm").onsubmit=e=>{
+e.preventDefault();
+execute(async()=>{
+const text=$("sendText").value.trim().replace(/[ \t]+/g," ");
+if(!text&&!S.image&&!S.audio)
+throw Object.assign(new Error("Empty"),{userMessage:"กรุณาเขียนข้อความหรือแนบไฟล์"});
+if(text.length>MAX_TEXT)throw new Error("Message too long");
+if(S.recorder&&S.recorder.state!=="inactive")
+throw Object.assign(new Error("Recording"),{userMessage:"กรุณาหยุดบันทึกเสียงก่อน"});
+let imageRef=null,audioRef=null;
+if(S.image)imageRef=await uploadFile(S.image,"image",p.username);
+if(S.audio)audioRef=await uploadFile(S.audio,"audio",p.username);
+await api("/messages/send",{
+username:p.username,text,
+senderToken:senderToken(),
+imageId:imageRef?.fileId||null,
+audioId:audioRef?.fileId||null,
+hintConsent:false,
+requestId:crypto.randomUUID()
+});
+$("sendText").value="";
+$("sendText").dispatchEvent(new Event("input"));
+$("clearImage").click();clearAudio();
+toast("ส่งข้อความเรียบร้อยแล้ว","success");
+});
+};
+}
+async function startRecording(){
+if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
+toast("เบราว์เซอร์ไม่รองรับการบันทึกเสียง","error");return;
+}
+try{
+const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+S.stream=stream;
+const mime=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"].find(x=>MediaRecorder.isTypeSupported(x));
+const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+S.recorder=recorder;
+const chunks=[];
+recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+recorder.onstop=()=>{
+const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+if(blob.size<=MAX_AUDIO){
+S.audio=blob;
+if(S.audioURL)URL.revokeObjectURL(S.audioURL);
+S.audioURL=URL.createObjectURL(blob);
+$("audioPreview").src=S.audioURL;
+$("audioPreview").classList.remove("hidden");
+$("clearAudio").disabled=false;
+}else toast("เสียงมีขนาดใหญ่เกินกำหนด","error");
+stream.getTracks().forEach(t=>t.stop());
+S.stream=null;
+};
+recorder.start();
+S.recordSeconds=0;
+$("recordBtn").disabled=true;$("stopBtn").disabled=false;
+S.recordTimer=setInterval(()=>{
+S.recordSeconds++;
+$("recordTime").textContent="00:"+String(S.recordSeconds).padStart(2,"0");
+if(S.recordSeconds>=MAX_SECONDS)stopRecording();
+},1000);
+}catch(e){fail(Object.assign(e,{userMessage:"ไม่สามารถเปิดไมโครโฟนได้"}))}
+}
+function stopRecording(){
+clearInterval(S.recordTimer);
+if(S.recorder?.state==="recording")S.recorder.stop();
+if($("recordBtn"))$("recordBtn").disabled=false;
+if($("stopBtn"))$("stopBtn").disabled=true;
+}
+function clearAudio(){
+if(S.recorder?.state==="recording")stopRecording();
+S.audio=null;
+if(S.audioURL)URL.revokeObjectURL(S.audioURL);
+S.audioURL=null;
+if($("audioPreview")){$("audioPreview").removeAttribute("src");$("audioPreview").classList.add("hidden")}
+if($("clearAudio"))$("clearAudio").disabled=true;
+}
+/*
+ Audio effects are applied through offline rendering.
+ Playback-rate pitch shifting changes duration.
+ The resulting WAV file is actually modified audio.
+*/
+async function processVoice(blob,effect){
+if(effect==="original")return blob;
+const context=new AudioContext();
+const buffer=await context.decodeAudioData(await blob.arrayBuffer());
+await context.close();
+const rate=effect==="lower"?.8:effect==="higher"?1.25:1;
+const frames=Math.ceil(buffer.length/rate);
+const offline=new OfflineAudioContext(1,frames,buffer.sampleRate);
+const source=offline.createBufferSource();
+source.buffer=buffer;
+source.playbackRate.value=rate;
+let node=source;
+if(effect==="soft"){
+const gain=offline.createGain();gain.gain.value=.65;
+node.connect(gain);node=gain;
+}
+if(effect==="filtered"){
+const filter=offline.createBiquadFilter();
+filter.type="lowpass";filter.frequency.value=1100;
+node.connect(filter);node=filter;
+}
+node.connect(offline.destination);
+source.start();
+const rendered=await offline.startRendering();
+const samples=rendered.getChannelData(0);
+const out=new ArrayBuffer(44+samples.length*2);
+const view=new DataView(out);
+const write=(offset,text)=>{for(let i=0;i<text.length;i++)view.setUint8(offset+i,text.charCodeAt(i))};
+write(0,"RIFF");view.setUint32(4,36+samples.length*2,true);
+write(8,"WAVE");write(12,"fmt ");
+view.setUint32(16,16,true);view.setUint16(20,1,true);
+view.setUint16(22,1,true);view.setUint32(24,rendered.sampleRate,true);
+view.setUint32(28,rendered.sampleRate*2,true);
+view.setUint16(32,2,true);view.setUint16(34,16,true);
+write(36,"data");view.setUint32(40,samples.length*2,true);
+for(let i=0;i<samples.length;i++){
+const v=Math.max(-1,Math.min(1,samples[i]));
+view.setInt16(44+i*2,v<0?v*32768:v*32767,true);
+}
+return new Blob([out],{type:"audio/wav"});
+}
+function renderPublicWall(){
+const root=$("publicWall");if(!root)return;
+root.innerHTML=S.wall.length?S.wall.map(w=>`
+<div class="card message">
+<p>${escapeHTML(w.text||"")}</p>
+${w.reply?`<p><strong>คำตอบ:</strong> ${escapeHTML(w.reply)}</p>`:""}
+<div class="row">
+<button class="btn small outline" data-react="${escapeHTML(w.id)}">ถูกใจ · ${Number(w.reactions||0)}</button>
+<button class="btn small outline" data-report-wall="${escapeHTML(w.id)}">รายงาน</button>
+</div></div>`).join(""):`<div class="empty">ยังไม่มีข้อความสาธารณะ</div>`;
+document.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>execute(async()=>{
+await api("/wall/react",{wallId:b.dataset.react,senderToken:senderToken()});
+await loadPublic(S.publicProfile.username);
+}));
+document.querySelectorAll("[data-report-wall]").forEach(b=>b.onclick=()=>reportContent("wall",b.dataset.reportWall));
+}
+function copyLink(){
+const username=S.profile?.username;
+if(!username){toast("ยังไม่มี Username","error");return}
+const url=new URL(location.pathname,location.origin);
+url.searchParams.set("u",username);
+navigator.clipboard.writeText(url.href).then(()=>toast("คัดลอกลิงก์แล้ว","success")).catch(fail);
+}
+const STORY_THEMES={
+minimal:{bg:"#f7f7fc",card:"#ffffff",text:"#242238",accent:"#7055ed"},
+midnight:{bg:"#151526",card:"#28283e",text:"#ffffff",accent:"#a99aff"},
+gradient:{bg:"#7055ed",card:"#ffffff",text:"#28233b",accent:"#db66cc"},
+pastel:{bg:"#fbe6ef",card:"#fff9fc",text:"#51374b",accent:"#d96ca0"}
+};
+function wrapCanvas(ctx,text,maxWidth){
+const lines=[];
+for(const paragraph of String(text||"").split("\n")){
+let current="";
+for(const char of paragraph){
+if(ctx.measureText(current+char).width>maxWidth&&current){
+lines.push(current);current=char;
+}else current+=char;
+}
+lines.push(current);
+}
+return lines;
+}
+function roundRect(ctx,x,y,w,h,r){
+ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+}
+function drawStory(){
+const canvas=document.createElement("canvas");
+canvas.width=1080;canvas.height=1920;
+const ctx=canvas.getContext("2d");
+const theme=STORY_THEMES[S.storyTheme];
+ctx.fillStyle=S.storyColor||theme.bg;
+ctx.fillRect(0,0,1080,1920);
+if(S.storyTheme==="gradient"&&!S.storyColor){
+const grad=ctx.createLinearGradient(0,0,1080,1920);
+grad.addColorStop(0,"#7456ed");grad.addColorStop(1,"#df67bd");
+ctx.fillStyle=grad;ctx.fillRect(0,0,1080,1920);
+}
+const text=S.storyTextColor||theme.text;
+ctx.fillStyle=theme.card;
+roundRect(ctx,75,500,930,920,52);ctx.fill();
+ctx.fillStyle=text;
+ctx.textAlign="center";
+ctx.font="bold 49px 'Noto Sans Thai',sans-serif";
+let lines=wrapCanvas(ctx,S.story.text||"ข้อความเสียง",790);
+if(lines.length>12){
+ctx.font="bold 37px 'Noto Sans Thai',sans-serif";
+lines=wrapCanvas(ctx,S.story.text||"ข้อความเสียง",810);
+}
+if(lines.length>18)throw Object.assign(new Error("Story text overflow"),{userMessage:"ข้อความยาวเกินพื้นที่ภาพ Story กรุณาเลือกข้อความที่สั้นลง"});
+let y=720;
+const lineHeight=lines.length>12?57:75;
+lines.forEach(line=>{ctx.fillText(line,540,y);y+=lineHeight});
+if(S.story.reply){
+ctx.fillStyle=theme.accent;
+ctx.fillRect(180,1120,720,3);
+ctx.fillStyle=text;
+ctx.font="35px 'Noto Sans Thai',sans-serif";
+const replyLines=wrapCanvas(ctx,S.story.reply,770);
+if(replyLines.length>5)throw Object.assign(new Error("Reply overflow"),{userMessage:"คำตอบยาวเกินพื้นที่ภาพ"});
+replyLines.forEach((line,i)=>ctx.fillText(line,540,1190+i*50));
+}
+ctx.fillStyle=S.storyTheme==="midnight"?"#ffffff":"#544a79";
+ctx.font="36px Inter,sans-serif";
+if(S.storyShowName)ctx.fillText("@"+(S.profile?.username||"whispr"),540,1510);
+if(S.storyShowBrand){
+ctx.font="bold 44px Inter,sans-serif";
+ctx.fillText("Whispr",540,1740);
+}
+S.storyCanvas=canvas;
+return canvas;
+}
+async function updateStory(){
+try{
+await document.fonts.ready;
+const canvas=drawStory();
+$("storyPreview").src=canvas.toDataURL("image/png");
+S.storyBlob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+}catch(e){fail(e)}
+}
+function openStory(message){
+S.story=message;
+S.storyTheme="minimal";
+S.storyColor="";S.storyTextColor="";
+openModal(`<h2>Story Creator</h2>
+<div class="two">
+<div>
+<div class="field"><label>ธีม</label><select class="input" id="storyTheme">
+<option value="minimal">Minimal Light</option>
+<option value="midnight">Midnight Dark</option>
+<option value="gradient">Gradient Modern</option>
+<option value="pastel">Soft Pastel</option>
+</select></div>
+<div class="field"><label>สีพื้นหลัง</label><input type="color" id="storyBg" value="#f7f7fc"></div>
+<div class="field"><label>สีข้อความ</label><input type="color" id="storyFg" value="#242238"></div>
+<label><input type="checkbox" id="storyName" checked> แสดง Username</label><br>
+<label><input type="checkbox" id="storyBrand" checked> แสดงแบรนด์</label>
+<div class="row" style="margin-top:20px">
+<button class="btn primary" id="downloadStory">Download</button>
+<button class="btn outline" id="shareStory">Share</button>
+</div>
+<p class="muted">การแชร์ผ่านระบบจะเปิด Share Sheet เมื่ออุปกรณ์รองรับ หากต้องการโพสต์ลง Instagram Story ให้เลือก Instagram หรือดาวน์โหลดภาพแล้วนำเข้าแอปด้วยตนเอง</p>
+</div>
+<div style="text-align:center"><img id="storyPreview" class="story-image" alt="Story preview"></div>
+</div>`);
+$("storyTheme").onchange=e=>{S.storyTheme=e.target.value;S.storyColor="";S.storyTextColor="";updateStory()};
+$("storyBg").oninput=e=>{S.storyColor=e.target.value;updateStory()};
+$("storyFg").oninput=e=>{S.storyTextColor=e.target.value;updateStory()};
+$("storyName").onchange=e=>{S.storyShowName=e.target.checked;updateStory()};
+$("storyBrand").onchange=e=>{S.storyShowBrand=e.target.checked;updateStory()};
+$("downloadStory").onclick=()=>{
+if(!S.storyBlob)return;
+const url=URL.createObjectURL(S.storyBlob);
+const a=document.createElement("a");a.href=url;a.download="whispr-story.png";a.click();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+$("shareStory").onclick=async()=>{
+if(!S.storyBlob)return;
+const file=new File([S.storyBlob],"whispr-story.png",{type:"image/png"});
+if(navigator.canShare?.({files:[file]})){
+try{await navigator.share({files:[file],title:"Whispr Story"})}
+catch(e){if(e.name!=="AbortError")fail(e)}
+}else{
+$("downloadStory").click();
+toast("ดาวน์โหลดภาพแล้ว กรุณาเปิด Instagram Story และเลือกรูปจากเครื่อง");
+}
+};
+updateStory();
+}
+async function loadAnalytics(){
+$("panel").innerHTML=`<h2>สถิติข้อความ</h2>
+<div class="row"><select id="analyticsRange" class="input" style="max-width:220px">
+<option value="7">7 วัน</option><option value="30">30 วัน</option><option value="90">90 วัน</option>
+</select></div><div id="analyticsBody" class="empty">กำลังโหลด...</div>`;
+$("analyticsRange").onchange=()=>fetchAnalytics();
+await fetchAnalytics();
+}
+async function fetchAnalytics(){
+try{
+const result=await api("/analytics/get",{days:Number($("analyticsRange").value)},true);
+const a=result.analytics||{};
+const fields=[
+["ข้อความทั้งหมด",a.total],["ข้อความใหม่",a.unread],
+["อ่านแล้ว",a.read],["ไฟล์แนบ",a.attachments],
+["ตอบกลับ",a.replied],["Public Wall",a.published],
+["Reactions",a.reactions],["รายงาน",a.reported],
+["บล็อก",a.blocked]
+];
+$("analyticsBody").className="";
+$("analyticsBody").innerHTML=`
+<div class="grid">${fields.map(([label,value])=>`<div class="card"><small>${label}</small><div class="stat">${Number(value||0).toLocaleString()}</div></div>`).join("")}</div>
+<div class="card" style="margin-top:16px"><h3>ข้อความรายวัน</h3><canvas id="analyticsChart" class="chart" width="850" height="260"></canvas></div>
+<div class="card" style="margin-top:16px"><h3>คำที่พบบ่อย</h3><div id="wordCloud" class="row"></div></div>`;
+drawChart(a.daily||[]);
+$("wordCloud").innerHTML=(a.words||[]).length?(a.words||[]).map(w=>`<span class="tag" style="font-size:${Math.min(26,12+Number(w.count||0))}px">${escapeHTML(w.word)}</span>`).join(""):`<p class="muted">ยังไม่มีข้อมูลคำที่ผ่านการกรอง</p>`;
+}catch(e){fail(e);$("analyticsBody").textContent="โหลดสถิติไม่สำเร็จ"}
+}
+function drawChart(data){
+const c=$("analyticsChart"),ctx=c.getContext("2d");
+ctx.clearRect(0,0,c.width,c.height);
+const max=Math.max(1,...data.map(x=>Number(x.count||0)));
+const width=(c.width-60)/Math.max(1,data.length);
+data.forEach((item,i)=>{
+const height=180*Number(item.count||0)/max;
+ctx.fillStyle="#7055ed";
+ctx.fillRect(35+i*width,215-height,Math.max(2,width-5),height);
+if(data.length<=14){
+ctx.fillStyle="#77748b";ctx.font="11px sans-serif";
+ctx.fillText(String(item.date).slice(5),35+i*width,242);
+}
+});
+}
+$("langBtn").onclick=()=>{
+S.lang=S.lang==="th"?"en":"th";
+localStorage.setItem("wh-lang",S.lang);render();
+};
+$("themeBtn").onclick=()=>setTheme(S.theme==="light"?"dark":"light");
+window.addEventListener("popstate",()=>{
+initRoute();
+if(S.route==="public")loadPublic(new URLSearchParams(location.search).get("u"));
+else render();
+});
+window.addEventListener("beforeunload",()=>{
+if(S.stream)S.stream.getTracks().forEach(t=>t.stop());
+});
+setTheme(S.theme);
+initRoute();
+onAuthStateChanged(auth,async user=>{
+S.user=user;
+if(user){
+try{await loadProfile()}catch(e){console.error("Profile load failed",e.code||e.message);S.profile=null}
+}else S.profile=null;
+if(S.route==="public"){
+await loadPublic(new URLSearchParams(location.search).get("u"));
+}else render();
+});
+</script>
 </body>
 </html>
