@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anonymous Messaging Platform</title>
+    
+    <!-- Google Fonts: Inter & Noto Sans Thai -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --skeleton-base: #e2e8f0;
+            --skeleton-highlight: #f8fafc;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Theme Variables */
+                --bg-color: #0f172a;
+                --surface-color: #1e293b;
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+                --skeleton-base: #334155;
+                --skeleton-highlight: #475569;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        a:hover {
+            color: var(--primary-hover);
+        }
+
+        /* Navbar */
+        nav {
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .nav-container {
+            max-width: 1024px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Core UI Components */
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background-color: var(--bg-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: var(--danger-hover);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Typography & Utils */
+        .text-center { text-align: center; }
+        .text-sm { font-size: 0.875rem; }
+        .text-muted { color: var(--text-secondary); }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .w-full { width: 100%; }
+        
+        /* Views */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Messages Inbox */
+        .message-item {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .message-item:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .message-content {
+            font-size: 1.05rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 1.25rem;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: var(--radius-md);
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-card {
+            height: 150px;
+            margin-bottom: 1rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background-color: var(--surface-color);
+            color: var(--text-primary);
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left-color: #10b981; }
+        .toast.error { border-left-color: var(--danger-color); }
+
+        /* Custom Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.95);
+            transition: transform 0.2s;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body { padding: 1.25rem; }
+        .modal-footer {
+            padding: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .close-modal {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        /* Profile Header */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .avatar-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        /* Story Canvas Preview */
+        #storyPreviewContainer {
+            text-align: center;
+            margin: 1rem 0;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        #storyCanvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#/" class="logo">
+                <i data-lucide="message-square"></i> AnonMSG
+            </a>
+            <div class="nav-links" id="navAuthLinks">
+                <a href="#/login" class="btn btn-outline" style="padding: 0.4rem 0.8rem;">เข้าสู่ระบบ</a>
+            </div>
+            <div class="nav-links" id="navUserLinks" style="display: none;">
+                <a href="#/dashboard"><i data-lucide="inbox"></i></a>
+                <a href="#/settings"><i data-lucide="settings"></i></a>
+                <button id="btnLogout" class="btn btn-outline" style="padding: 0.4rem 0.8rem;">ออก</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container">
+        
+        <!-- View: Home -->
+        <section id="view-home" class="view-section">
+            <div class="card text-center" style="padding: 3rem 1.5rem;">
+                <h1 style="font-size: 2rem; margin-bottom: 1rem;">รับข้อความนิรนามจากผู้ติดตาม</h1>
+                <p class="text-muted mb-4">สร้างพื้นที่ปลอดภัยให้เพื่อนๆ และผู้ติดตามสามารถส่งข้อความถึงคุณได้โดยไม่ต้องเปิดเผยตัวตน</p>
+                <a href="#/register" class="btn btn-primary">สร้างลิงก์ของคุณฟรี</a>
+            </div>
+        </section>
+
+        <!-- View: Login / Register -->
+        <section id="view-auth" class="view-section">
+            <div class="card" style="max-width: 400px; margin: 0 auto;">
+                <h2 id="authTitle" class="text-center mb-4">เข้าสู่ระบบ</h2>
+                <form id="authForm">
+                    <div class="form-group" id="groupUsername" style="display: none;">
+                        <label class="form-label">ชื่อผู้ใช้ (Username)</label>
+                        <input type="text" id="authUsername" class="form-control" pattern="[a-zA-Z0-9_]+" title="ภาษาอังกฤษ ตัวเลข หรือขีดล่างเท่านั้น">
+                        <small class="text-muted">ใช้สำหรับเป็นลิงก์โปรไฟล์ ห้ามเว้นวรรค</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">อีเมล</label>
+                        <input type="email" id="authEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">รหัสผ่าน</label>
+                        <input type="password" id="authPassword" class="form-control" required minlength="6">
+                    </div>
+                    <button type="submit" id="authSubmitBtn" class="btn btn-primary w-full mt-4">เข้าสู่ระบบ</button>
+                </form>
+                <div class="text-center mt-4">
+                    <p class="text-sm text-muted" id="authToggleText">
+                        ยังไม่มีบัญชี? <a href="javascript:void(0)" id="btnToggleAuth">สมัครสมาชิก</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Dashboard (Inbox) -->
+        <section id="view-dashboard" class="view-section">
+            <div class="card mb-4 text-center">
+                <h2 class="mb-2">ลิงก์ของคุณ</h2>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="shareLinkInput" class="form-control" readonly>
+                    <button id="btnCopyLink" class="btn btn-primary"><i data-lucide="copy"></i></button>
+                </div>
+                <p class="text-sm text-muted">แชร์ลิงก์นี้ลงใน Instagram Story ของคุณเพื่อให้เพื่อนๆ ส่งข้อความมาหา</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>กล่องข้อความ (<span id="msgCount">0</span>)</h3>
+            </div>
+
+            <div id="messagesList">
+                <!-- Messages will be injected here -->
+            </div>
+        </section>
+
+        <!-- View: Settings -->
+        <section id="view-settings" class="view-section">
+            <div class="card">
+                <h2 class="mb-4">ตั้งค่าโปรไฟล์</h2>
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label class="form-label">ชื่อที่แสดง (Display Name)</label>
+                        <input type="text" id="setDisplayName" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ข้อความต้อนรับหน้าโปรไฟล์</label>
+                        <textarea id="setBio" class="form-control" placeholder="ส่งข้อความอะไรมาก็ได้..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">เปิดรับข้อความ</label>
+                        <select id="setIsAccepting" class="form-control">
+                            <option value="true">เปิดรับปกติ</option>
+                            <option value="false">ปิดรับชั่วคราว</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full mt-4" id="btnSaveSettings">บันทึกการตั้งค่า</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- View: Public Profile (Send Message) -->
+        <section id="view-public" class="view-section">
+            <div id="publicProfileContent" class="card">
+                <div class="profile-header">
+                    <div class="avatar-circle" id="pubAvatar">?</div>
+                    <h2 id="pubDisplayName">กำลังโหลด...</h2>
+                    <p class="text-muted mt-4" id="pubBio">...</p>
+                </div>
+
+                <form id="sendMessageForm">
+                    <div class="form-group">
+                        <textarea id="msgContent" class="form-control" placeholder="พิมพ์ข้อความของคุณที่นี่... (ไม่ระบุตัวตน)" required maxlength="500"></textarea>
+                        <div class="text-sm text-muted" style="text-align: right; margin-top: 0.5rem;"><span id="msgCharCount">0</span>/500</div>
+                    </div>
+                    <button type="submit" id="btnSendMsg" class="btn btn-primary w-full mt-4">ส่งข้อความนิรนาม</button>
+                </form>
+                <div class="text-center mt-4 text-sm text-muted">
+                    <i data-lucide="shield-check" style="width:16px;height:16px;vertical-align:middle;"></i> การส่งข้อความนี้ปลอดภัยและไม่เปิดเผยตัวตน 100%
+                </div>
+            </div>
+            
+            <div id="publicNotFound" class="card empty-state" style="display: none;">
+                <i data-lucide="user-x"></i>
+                <h3>ไม่พบผู้ใช้งานนี้</h3>
+                <p>โปรไฟล์นี้อาจถูกลบหรือไม่มีอยู่จริง</p>
+                <a href="#/" class="btn btn-outline mt-4">กลับหน้าแรก</a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Custom Modal -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Title</h3>
+                <button class="close-modal" id="btnModalCloseTop"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Content
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <button class="btn btn-outline close-modal" id="btnModalCancel">ยกเลิก</button>
+                <button class="btn btn-primary" id="btnModalConfirm">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // ⚠️ นำ Firebase Config ของคุณมาวางที่นี่ ⚠️
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global State
+        let currentUser = null;
+        let userData = null;
+        let isLoginMode = true;
+        let unsubMessages = null;
+        let currentPublicUserId = null;
+
+        // UI Utilities
+        const showToast = (message, type = 'success') => {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons({root: toast});
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        const showModal = (title, content, confirmText, onConfirm, isDanger = false) => {
+            const modal = document.getElementById('customModal');
+            document.getElementById('modalTitle').textContent = title;
+            
+            if (typeof content === 'string') {
+                document.getElementById('modalBody').innerHTML = content;
+            } else {
+                document.getElementById('modalBody').innerHTML = '';
+                document.getElementById('modalBody').appendChild(content);
+            }
+
+            const btnConfirm = document.getElementById('btnModalConfirm');
+            btnConfirm.textContent = confirmText;
+            btnConfirm.className = `btn ${isDanger ? 'btn-danger' : 'btn-primary'}`;
+            
+            const handleConfirm = () => {
+                onConfirm();
+                closeModal();
+                btnConfirm.removeEventListener('click', handleConfirm);
+            };
+            
+            // Clear old listeners by cloning
+            const newBtnConfirm = btnConfirm.cloneNode(true);
+            btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+            newBtnConfirm.addEventListener('click', handleConfirm);
+
+            modal.classList.add('active');
+        };
+
+        const closeModal = () => document.getElementById('customModal').classList.remove('active');
+        document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', closeModal));
+
+        // Router & View Management
+        const switchView = (viewId) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            lucide.createIcons();
+        };
+
+        const handleRoute = () => {
+            const hash = window.location.hash;
+            if (hash === '#/login' || hash === '#/register') {
+                if (currentUser) {
+                    window.location.hash = '#/dashboard';
+                    return;
+                }
+                isLoginMode = hash === '#/login';
+                document.getElementById('authTitle').textContent = isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+                document.getElementById('authSubmitBtn').textContent = isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+                document.getElementById('groupUsername').style.display = isLoginMode ? 'none' : 'block';
+                document.getElementById('authUsername').required = !isLoginMode;
+                document.getElementById('authToggleText').innerHTML = isLoginMode 
+                    ? 'ยังไม่มีบัญชี? <a href="#/register">สมัครสมาชิก</a>' 
+                    : 'มีบัญชีแล้ว? <a href="#/login">เข้าสู่ระบบ</a>';
+                switchView('view-auth');
+            } else if (hash === '#/dashboard') {
+                if (!currentUser) return window.location.hash = '#/login';
+                switchView('view-dashboard');
+                initDashboard();
+            } else if (hash === '#/settings') {
+                if (!currentUser) return window.location.hash = '#/login';
+                switchView('view-settings');
+                initSettings();
+            } else if (hash.startsWith('#/u/')) {
+                const username = hash.split('/')[2];
+                initPublicProfile(username);
+            } else {
+                switchView('view-home');
+            }
+        };
+
+        window.addEventListener('hashchange', handleRoute);
+
+        // Auth State Observer
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            const navAuth = document.getElementById('navAuthLinks');
+            const navUser = document.getElementById('navUserLinks');
+
+            if (user) {
+                navAuth.style.display = 'none';
+                navUser.style.display = 'flex';
+                // Fetch User Profile Data
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    userData = docSnap.data();
+                }
+                // Redirect if on auth pages
+                if(window.location.hash === '#/login' || window.location.hash === '#/register' || window.location.hash === '') {
+                    window.location.hash = '#/dashboard';
+                } else {
+                    handleRoute();
+                }
+            } else {
+                navAuth.style.display = 'flex';
+                navUser.style.display = 'none';
+                userData = null;
+                if(unsubMessages) unsubMessages();
+                if(window.location.hash === '#/dashboard' || window.location.hash === '#/settings') {
+                    window.location.hash = '#/';
+                } else {
+                    handleRoute();
+                }
+            }
+        });
+
+        // Authentication Handlers
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const btn = document.getElementById('authSubmitBtn');
+            const ogText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'กำลังดำเนินการ...';
+
+            try {
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast('เข้าสู่ระบบสำเร็จ');
+                } else {
+                    const username = document.getElementById('authUsername').value.trim().toLowerCase();
+                    // Check if username exists (Client side check, should be backed by rules)
+                    const q = query(collection(db, "users"), where("username", "==", username));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        throw new Error("ชื่อผู้ใช้นี้ถูกใช้งานแล้ว");
+                    }
+
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    // Create Profile in Firestore
+                    await setDoc(doc(db, "users", user.uid), {
+                        uid: user.uid,
+                        username: username,
+                        displayName: username,
+                        email: email,
+                        bio: "ส่งข้อความอะไรมาก็ได้...",
+                        isAccepting: true,
+                        createdAt: serverTimestamp()
+                    });
+                    showToast('สมัครสมาชิกสำเร็จ');
+                }
+                e.target.reset();
+            } catch (error) {
+                showToast(error.message.includes('auth/invalid') ? 'ข้อมูลไม่ถูกต้อง' : error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = ogText;
+            }
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                showToast('ออกจากระบบแล้ว');
+                window.location.hash = '#/';
+            });
+        });
+
+        // Dashboard (Inbox) Logic
+        const initDashboard = () => {
+            if (!userData) return setTimeout(initDashboard, 500); // Wait for data
+            
+            const profileLink = `${window.location.origin}${window.location.pathname}#/u/${userData.username}`;
+            document.getElementById('shareLinkInput').value = profileLink;
+            
+            const q = query(
+                collection(db, "messages"), 
+                where("recipient_id", "==", currentUser.uid),
+                orderBy("createdAt", "desc")
+            );
+
+            const listEl = document.getElementById('messagesList');
+            listEl.innerHTML = `
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            `;
+
+            if(unsubMessages) unsubMessages();
+
+            unsubMessages = onSnapshot(q, (snapshot) => {
+                document.getElementById('msgCount').textContent = snapshot.size;
+                listEl.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    listEl.innerHTML = `
+                        <div class="empty-state">
+                            <i data-lucide="inbox"></i>
+                            <h3>ยังไม่มีข้อความ</h3>
+                            <p>แชร์ลิงก์ของคุณให้เพื่อนๆ เพื่อเริ่มรับข้อความแรก</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const msg = docSnap.data();
+                    const msgId = docSnap.id;
+                    const date = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleString('th-TH') : 'กำลังส่ง...';
+
+                    const div = document.createElement('div');
+                    div.className = 'message-item';
+                    div.innerHTML = `
+                        <div class="message-header">
+                            <span>นิรนาม</span>
+                            <span>${date}</span>
+                        </div>
+                        <div class="message-content">${escapeHTML(msg.content)}</div>
+                        <div class="message-actions">
+                            <button class="btn btn-outline btn-sm btn-story" data-id="${msgId}" data-content="${escapeHTML(msg.content)}">
+                                <i data-lucide="instagram"></i> แชร์ Story
+                            </button>
+                            <button class="btn btn-danger btn-sm btn-delete" data-id="${msgId}">
+                                <i data-lucide="trash-2"></i> ลบ
+                            </button>
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                });
+                lucide.createIcons();
+
+                // Attach Events for generated buttons
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        showModal('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบข้อความนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้', 'ลบข้อความ', async () => {
+                            try {
+                                await deleteDoc(doc(db, "messages", id));
+                                showToast('ลบข้อความแล้ว');
+                            } catch (err) {
+                                showToast('เกิดข้อผิดพลาดในการลบ', 'error');
+                            }
+                        }, true);
+                    });
+                });
+
+                document.querySelectorAll('.btn-story').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const content = e.currentTarget.dataset.content;
+                        generateStoryAndShowModal(content);
+                    });
+                });
+            });
+        };
+
+        document.getElementById('btnCopyLink').addEventListener('click', () => {
+            const link = document.getElementById('shareLinkInput');
+            link.select();
+            document.execCommand('copy');
+            showToast('คัดลอกลิงก์แล้ว');
+        });
+
+        // Settings Logic
+        const initSettings = () => {
+            if (!userData) return setTimeout(initSettings, 500);
+            document.getElementById('setDisplayName').value = userData.displayName || '';
+            document.getElementById('setBio').value = userData.bio || '';
+            document.getElementById('setIsAccepting').value = userData.isAccepting !== false ? 'true' : 'false';
+        };
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveSettings');
+            btn.disabled = true;
+            btn.textContent = 'กำลังบันทึก...';
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    displayName: document.getElementById('setDisplayName').value.trim(),
+                    bio: document.getElementById('setBio').value.trim(),
+                    isAccepting: document.getElementById('setIsAccepting').value === 'true'
+                });
+                // Update local memory
+                userData.displayName = document.getElementById('setDisplayName').value.trim();
+                showToast('บันทึกการตั้งค่าสำเร็จ');
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'บันทึกการตั้งค่า';
+            }
+        });
+
+        // Public Profile Logic (Send Message)
+        const initPublicProfile = async (username) => {
+            switchView('view-public');
+            document.getElementById('publicProfileContent').style.display = 'none';
+            document.getElementById('publicNotFound').style.display = 'none';
+            currentPublicUserId = null;
+
+            try {
+                // We use dynamic import structure for query to find user by username
+                const { getDocs, query, collection, where } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+                const q = query(collection(db, "users"), where("username", "==", username));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    document.getElementById('publicNotFound').style.display = 'block';
+                    return;
+                }
+
+                const pubUserDoc = querySnapshot.docs[0];
+                const pubUser = pubUserDoc.data();
+                currentPublicUserId = pubUserDoc.id;
+
+                document.getElementById('pubDisplayName').textContent = pubUser.displayName;
+                document.getElementById('pubAvatar').textContent = pubUser.displayName.charAt(0).toUpperCase();
+                document.getElementById('pubBio').textContent = pubUser.bio;
+                
+                const form = document.getElementById('sendMessageForm');
+                const btn = document.getElementById('btnSendMsg');
+                
+                if (pubUser.isAccepting === false) {
+                    form.style.display = 'none';
+                    document.getElementById('pubBio').textContent = '⚠️ ขณะนี้โปรไฟล์นี้ปิดรับข้อความ';
+                } else {
+                    form.style.display = 'block';
+                    btn.disabled = false;
+                    document.getElementById('msgContent').value = '';
+                    document.getElementById('msgCharCount').textContent = '0';
+                }
+
+                document.getElementById('publicProfileContent').style.display = 'block';
+            } catch (error) {
+                console.error(error);
+                showToast('ไม่สามารถดึงข้อมูลโปรไฟล์ได้', 'error');
+            }
+        };
+
+        // Textarea char count
+        document.getElementById('msgContent').addEventListener('input', (e) => {
+            document.getElementById('msgCharCount').textContent = e.target.value.length;
+        });
+
+        // Submit Message
+        document.getElementById('sendMessageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!currentPublicUserId) return;
+
+            const content = document.getElementById('msgContent').value.trim();
+            if(!content) return showToast('กรุณาพิมพ์ข้อความ', 'error');
+
+            const btn = document.getElementById('btnSendMsg');
+            btn.disabled = true;
+            btn.textContent = 'กำลังส่ง...';
+
+            try {
+                await addDoc(collection(db, "messages"), {
+                    recipient_id: currentPublicUserId,
+                    content: content,
+                    createdAt: serverTimestamp(),
+                    isRead: false
+                });
+                
+                showToast('ส่งข้อความสำเร็จ!');
+                document.getElementById('msgContent').value = '';
+                document.getElementById('msgCharCount').textContent = '0';
+            } catch (error) {
+                showToast('ไม่สามารถส่งข้อความได้ กรุณาลองใหม่', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'ส่งข้อความนิรนาม';
+            }
+        });
+
+        // Story Image Generator (Canvas API)
+        const generateStoryAndShowModal = (text) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1920;
+            const ctx = canvas.getContext('2d');
+
+            // Background Gradient (Dark/Modern)
+            const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+            gradient.addColorStop(0, '#0f172a');
+            gradient.addColorStop(1, '#1e293b');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Card Background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 30;
+            roundRect(ctx, 140, 600, 800, 720, 40);
+            ctx.fill();
+            ctx.shadowColor = 'transparent'; // reset
+
+            // Card Header (App Name / Prompt)
+            ctx.font = '500 40px Inter';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.textAlign = 'center';
+            ctx.fillText('มีคนส่งข้อความนิรนามถึงคุณ', 540, 700);
+
+            // Text Wrapper Logic
+            ctx.font = '600 64px Noto Sans Thai, Inter';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const maxWidth = 640;
+            const lineHeight = 85;
+            const words = text.split(' ');
+            let line = '';
+            let lines = [];
+
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    lines.push(line);
+                    line = words[n] + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line);
+
+            // Draw Text centered vertically in card
+            let startY = 960 - ((lines.length - 1) * lineHeight) / 2;
+            for(let k=0; k<lines.length; k++) {
+                ctx.fillText(lines[k], 540, startY + (k * lineHeight));
+            }
+
+            // Branding at bottom
+            ctx.font = '600 45px Inter';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fillText('AnonMSG.com', 540, 1750);
+
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // Build Modal Content
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div id="storyPreviewContainer">
+                    <img id="storyCanvas" src="${dataUrl}" alt="Story Preview">
+                </div>
+                <p class="text-sm text-muted text-center mt-4">บันทึกภาพนี้และแชร์ลง Instagram Story พร้อมแนบลิงก์โปรไฟล์ของคุณจากสติกเกอร์ Link</p>
+            `;
+
+            showModal('แชร์ข้อความลง Story', container, 'ดาวน์โหลดภาพ (PNG)', () => {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = `story_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('ดาวน์โหลดรูปภาพสำเร็จ');
+            });
+        };
+
+        // Utility: Draw rounded rectangle on canvas
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        // Utility: Escape HTML to prevent XSS
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag])
+            );
+        }
+
+        // Initialize App View
+        lucide.createIcons();
+        handleRoute();
+
+    </script>
+</body>
+</html>
