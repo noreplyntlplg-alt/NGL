@@ -1,1114 +1,3430 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anonymous Messaging Platform</title>
-    
-    <!-- Google Fonts: Inter & Noto Sans Thai -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="แพลตฟอร์มรับข้อความนิรนาม พร้อมระบบตอบกลับ สร้างภาพ Story และจัดการข้อความอย่างปลอดภัย">
+  <title>Whispr — Anonymous Messages</title>
 
-    <style>
-        :root {
-            /* Light Theme Variables */
-            --bg-color: #f8fafc;
-            --surface-color: #ffffff;
-            --text-primary: #0f172a;
-            --text-secondary: #64748b;
-            --primary-color: #3b82f6;
-            --primary-hover: #2563eb;
-            --danger-color: #ef4444;
-            --danger-hover: #dc2626;
-            --border-color: #e2e8f0;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --radius-md: 0.5rem;
-            --radius-lg: 1rem;
-            --skeleton-base: #e2e8f0;
-            --skeleton-highlight: #f8fafc;
-        }
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f3f8;
+      --text: #172033;
+      --muted: #68748a;
+      --line: #e1e6ef;
+      --primary: #6254e8;
+      --primary-hover: #5143d5;
+      --danger: #c93645;
+      --success: #13845e;
+      --radius: 18px;
+      --shadow: 0 8px 30px rgba(22, 32, 56, .06);
+    }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                /* Dark Theme Variables */
-                --bg-color: #0f172a;
-                --surface-color: #1e293b;
-                --text-primary: #f8fafc;
-                --text-secondary: #94a3b8;
-                --border-color: #334155;
-                --skeleton-base: #334155;
-                --skeleton-highlight: #475569;
-            }
-        }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #10131c;
+      --surface: #191e2a;
+      --surface-2: #232a39;
+      --text: #edf0f8;
+      --muted: #a1abc0;
+      --line: #30394c;
+      --primary: #9a8fff;
+      --primary-hover: #b1a9ff;
+      --danger: #ff818b;
+      --success: #66d9aa;
+      --shadow: 0 8px 30px rgba(0, 0, 0, .18);
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', 'Noto Sans Thai', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+    * { box-sizing: border-box; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            line-height: 1.5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            transition: background-color 0.3s, color 0.3s;
-        }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Tahoma, sans-serif;
+      line-height: 1.55;
+    }
 
-        a {
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        
-        a:hover {
-            color: var(--primary-hover);
-        }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
 
-        /* Navbar */
-        nav {
-            background-color: var(--surface-color);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem;
-            position: sticky;
-            top: 0;
-            z-index: 40;
-        }
+    a { color: var(--primary); overflow-wrap: anywhere; }
+    img, video, audio { max-width: 100%; }
 
-        .nav-container {
-            max-width: 1024px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .small { font-size: .86rem; }
+    .break { overflow-wrap: anywhere; }
+    .full { width: 100%; }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .between { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .stack { display: flex; flex-direction: column; gap: 12px; }
 
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
-        }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
 
-        .nav-links {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
+    .topbar-inner {
+      max-width: 1180px;
+      margin: auto;
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
 
-        /* Core UI Components */
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            flex: 1;
-            width: 100%;
-        }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 850;
+      font-size: 1.15rem;
+      letter-spacing: -.035em;
+    }
 
-        .card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 1.5rem;
-        }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+    }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--radius-md);
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-        }
+    .container {
+      width: min(1180px, calc(100% - 32px));
+      margin: 26px auto 60px;
+    }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(1.7rem, 4vw, 2.5rem); }
+    .hero p { margin: 0; color: var(--muted); max-width: 720px; }
 
-        .btn-primary:hover:not(:disabled) {
-            background-color: var(--primary-hover);
-        }
+    .layout {
+      display: grid;
+      grid-template-columns: 245px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
 
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
+    .sidebar, .panel, .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
 
-        .btn-outline:hover:not(:disabled) {
-            background-color: var(--bg-color);
-        }
+    .sidebar { padding: 12px; position: sticky; top: 78px; }
+    .nav-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 13px;
+      text-align: left;
+      background: transparent;
+      color: var(--text);
+      margin: 2px 0;
+    }
 
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
-        }
+    .nav-btn:hover, .nav-btn.active { background: var(--surface-2); }
+    .nav-btn.active { color: var(--primary); font-weight: 750; }
 
-        .btn-danger:hover:not(:disabled) {
-            background-color: var(--danger-hover);
-        }
+    .main { min-width: 0; }
+    .panel { padding: 22px; margin-bottom: 18px; }
+    .panel h2 { margin: 0 0 14px; font-size: 1.2rem; }
+    .panel h3 { margin: 0 0 8px; font-size: 1rem; }
+    .section-heading { margin: 0 0 15px; }
 
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .field label { font-size: .91rem; font-weight: 700; }
+    .field input, .field textarea, .field select,
+    .search-input, .control {
+      width: 100%;
+      min-width: 0;
+      padding: 11px 13px;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      outline: none;
+    }
 
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
+    .field input:focus, .field textarea:focus, .field select:focus,
+    .search-input:focus, .control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+    }
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+    .field textarea { min-height: 110px; resize: vertical; }
+    .field input[type="checkbox"] { width: auto; }
+    .checkline { display: flex; align-items: center; gap: 9px; }
 
-        textarea.form-control {
-            resize: vertical;
-            min-height: 120px;
-        }
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 10px 15px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform .15s ease, background .15s ease;
+    }
 
-        /* Typography & Utils */
-        .text-center { text-align: center; }
-        .text-sm { font-size: 0.875rem; }
-        .text-muted { color: var(--text-secondary); }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-4 { margin-bottom: 1rem; }
-        .mt-4 { margin-top: 1rem; }
-        .w-full { width: 100%; }
-        
-        /* Views */
-        .view-section {
-            display: none;
-            animation: fadeIn 0.3s ease-in-out;
-        }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { color: #fff; background: var(--primary); border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { color: var(--danger); }
+    .btn-quiet { background: var(--surface-2); }
+    .btn-small { min-height: 34px; padding: 6px 10px; font-size: .88rem; }
 
-        .view-section.active {
-            display: block;
-        }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 750;
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    .badge-success { color: var(--success); }
+    .badge-danger { color: var(--danger); }
 
-        /* Messages Inbox */
-        .message-item {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .message-item:hover {
-            box-shadow: var(--shadow-md);
-        }
+    .stat {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--surface);
+    }
 
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
+    .stat .value { font-size: 1.8rem; font-weight: 850; letter-spacing: -.04em; }
+    .stat .label { color: var(--muted); font-size: .88rem; }
 
-        .message-content {
-            font-size: 1.05rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-            margin-bottom: 1.25rem;
-        }
+    .profile-head {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
 
-        .message-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
+    .avatar {
+      flex: 0 0 auto;
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+    }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--text-secondary);
-        }
-        
-        .empty-state i {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
+    .avatar-large { width: 86px; height: 86px; }
+    .profile-head h2 { margin: 0; }
+    .message-list { display: flex; flex-direction: column; gap: 12px; }
 
-        /* Loading Skeleton */
-        .skeleton {
-            background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: var(--radius-md);
-        }
-        
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
+    .message-card {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 16px;
+      background: var(--surface);
+      min-width: 0;
+    }
 
-        .skeleton-card {
-            height: 150px;
-            margin-bottom: 1rem;
-        }
+    .message-card.is-new { border-left: 4px solid var(--primary); }
+    .message-body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 12px 0; }
+    .message-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .attachment { margin-top: 12px; }
+    .attachment img { max-height: 330px; border-radius: 12px; object-fit: contain; }
+    .attachment audio { width: 100%; }
 
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
+    .reveal-wrap { position: relative; display: inline-block; max-width: 100%; overflow: hidden; border-radius: 12px; }
+    .reveal-wrap img { display: block; transition: filter .22s ease; filter: blur(18px); }
+    .reveal-wrap.revealing img { filter: blur(0); }
+    .reveal-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      gap: 6px;
+      background: rgba(10, 15, 25, .32);
+      color: white;
+      font-weight: 750;
+      pointer-events: none;
+    }
+    .reveal-wrap.revealing .reveal-overlay { opacity: 0; }
 
-        .toast {
-            background-color: var(--surface-color);
-            color: var(--text-primary);
-            padding: 1rem 1.25rem;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            border-left: 4px solid var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transform: translateX(120%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+    .wall-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .wall-item { padding: 16px; border: 1px solid var(--line); border-radius: 14px; overflow-wrap: anywhere; }
+    .wall-text { white-space: pre-wrap; }
 
-        .toast.show { transform: translateX(0); }
-        .toast.success { border-left-color: #10b981; }
-        .toast.error { border-left-color: var(--danger-color); }
+    .empty {
+      padding: 30px 18px;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+    }
 
-        /* Custom Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 60;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            padding: 1rem;
-        }
+    .notice {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: .91rem;
+    }
 
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
+    .notice.error { color: var(--danger); }
+    .notice.success { color: var(--success); }
 
-        .modal-content {
-            background-color: var(--surface-color);
-            border-radius: var(--radius-lg);
-            width: 100%;
-            max-width: 400px;
-            box-shadow: var(--shadow-lg);
-            transform: scale(0.95);
-            transition: transform 0.2s;
-            overflow: hidden;
-        }
+    .toast-area {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: min(380px, calc(100% - 32px));
+      pointer-events: none;
+    }
 
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      box-shadow: var(--shadow);
+      padding: 13px 15px;
+      animation: toast-in .2s ease;
+      overflow-wrap: anywhere;
+    }
 
-        .modal-header {
-            padding: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-body { padding: 1.25rem; }
-        .modal-footer {
-            padding: 1.25rem;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-        .close-modal {
-            background: none; border: none; cursor: pointer;
-            color: var(--text-secondary);
-        }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(9, 14, 28, .6);
+    }
 
-        /* Profile Header */
-        .profile-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .avatar-circle {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
-            margin: 0 auto 1rem;
-        }
+    .modal {
+      width: min(650px, 100%);
+      max-height: min(90vh, 900px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 25px 90px rgba(0,0,0,.25);
+    }
 
-        /* Story Canvas Preview */
-        #storyPreviewContainer {
-            text-align: center;
-            margin: 1rem 0;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-        #storyCanvas {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
+    .modal h2 { margin-top: 0; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
 
-    </style>
+    .story-preview {
+      width: min(340px, 100%);
+      aspect-ratio: 9 / 16;
+      margin: 12px auto;
+      overflow: hidden;
+      border-radius: 22px;
+      background: #f5f0ff;
+      color: #211d35;
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .story-card {
+      width: 100%;
+      border-radius: 22px;
+      padding: 24px 18px;
+      background: rgba(255,255,255,.84);
+      box-shadow: 0 12px 40px rgba(0,0,0,.08);
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .story-content { font-size: 1.15rem; line-height: 1.65; font-weight: 750; }
+    .story-meta { margin-top: 16px; font-size: .85rem; opacity: .75; }
+    .story-preview.midnight { background: #111827; color: #f9fafb; }
+    .story-preview.midnight .story-card { background: #202a3b; }
+    .story-preview.gradient { background: linear-gradient(145deg, #6558e8, #db6cbd 55%, #ffb88c); color: white; }
+    .story-preview.gradient .story-card { background: rgba(18, 18, 40, .34); color: white; }
+    .story-preview.pastel { background: linear-gradient(145deg, #d9f5ed, #f9e1f2, #fff0cf); color: #3c3751; }
+    .story-preview.pastel .story-card { background: rgba(255,255,255,.65); }
+
+    .chart-wrap { width: 100%; overflow-x: auto; }
+    .chart-svg { display: block; width: 100%; min-width: 300px; height: 220px; }
+    .bar-chart { display: flex; align-items: end; gap: 8px; min-height: 190px; padding: 16px 0; }
+    .bar-column { flex: 1; min-width: 16px; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 6px; height: 170px; }
+    .bar { width: min(32px, 100%); min-height: 2px; border-radius: 7px 7px 2px 2px; background: var(--primary); }
+    .bar-label { color: var(--muted); font-size: .7rem; writing-mode: vertical-rl; }
+    .word-cloud { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 20px; }
+    .word-cloud span { color: var(--primary); font-weight: 800; }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .mobile-nav { display: none; }
+
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .mobile-nav {
+        display: flex;
+        overflow-x: auto;
+        gap: 7px;
+        padding: 0 0 12px;
+      }
+      .mobile-nav .nav-btn { width: auto; white-space: nowrap; border: 1px solid var(--line); }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .container { width: calc(100% - 20px); margin-top: 14px; }
+      .topbar-inner { padding: 10px 12px; }
+      .hero, .panel { padding: 16px; border-radius: 16px; }
+      .grid-2, .grid-3, .wall-grid { grid-template-columns: 1fr; }
+      .profile-head { align-items: flex-start; }
+      .avatar-large { width: 70px; height: 70px; }
+      .hide-mobile { display: none; }
+      .message-actions .btn { flex: 1 1 auto; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
 </head>
+
 <body>
-
-    <!-- Navigation -->
-    <nav>
-        <div class="nav-container">
-            <a href="#/" class="logo">
-                <i data-lucide="message-square"></i> AnonMSG
-            </a>
-            <div class="nav-links" id="navAuthLinks">
-                <a href="#/login" class="btn btn-outline" style="padding: 0.4rem 0.8rem;">เข้าสู่ระบบ</a>
-            </div>
-            <div class="nav-links" id="navUserLinks" style="display: none;">
-                <a href="#/dashboard"><i data-lucide="inbox"></i></a>
-                <a href="#/settings"><i data-lucide="settings"></i></a>
-                <button id="btnLogout" class="btn btn-outline" style="padding: 0.4rem 0.8rem;">ออก</button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Container -->
-    <main class="container">
-        
-        <!-- View: Home -->
-        <section id="view-home" class="view-section">
-            <div class="card text-center" style="padding: 3rem 1.5rem;">
-                <h1 style="font-size: 2rem; margin-bottom: 1rem;">รับข้อความนิรนามจากผู้ติดตาม</h1>
-                <p class="text-muted mb-4">สร้างพื้นที่ปลอดภัยให้เพื่อนๆ และผู้ติดตามสามารถส่งข้อความถึงคุณได้โดยไม่ต้องเปิดเผยตัวตน</p>
-                <a href="#/register" class="btn btn-primary">สร้างลิงก์ของคุณฟรี</a>
-            </div>
-        </section>
-
-        <!-- View: Login / Register -->
-        <section id="view-auth" class="view-section">
-            <div class="card" style="max-width: 400px; margin: 0 auto;">
-                <h2 id="authTitle" class="text-center mb-4">เข้าสู่ระบบ</h2>
-                <form id="authForm">
-                    <div class="form-group" id="groupUsername" style="display: none;">
-                        <label class="form-label">ชื่อผู้ใช้ (Username)</label>
-                        <input type="text" id="authUsername" class="form-control" pattern="[a-zA-Z0-9_]+" title="ภาษาอังกฤษ ตัวเลข หรือขีดล่างเท่านั้น">
-                        <small class="text-muted">ใช้สำหรับเป็นลิงก์โปรไฟล์ ห้ามเว้นวรรค</small>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">อีเมล</label>
-                        <input type="email" id="authEmail" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">รหัสผ่าน</label>
-                        <input type="password" id="authPassword" class="form-control" required minlength="6">
-                    </div>
-                    <button type="submit" id="authSubmitBtn" class="btn btn-primary w-full mt-4">เข้าสู่ระบบ</button>
-                </form>
-                <div class="text-center mt-4">
-                    <p class="text-sm text-muted" id="authToggleText">
-                        ยังไม่มีบัญชี? <a href="javascript:void(0)" id="btnToggleAuth">สมัครสมาชิก</a>
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- View: Dashboard (Inbox) -->
-        <section id="view-dashboard" class="view-section">
-            <div class="card mb-4 text-center">
-                <h2 class="mb-2">ลิงก์ของคุณ</h2>
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <input type="text" id="shareLinkInput" class="form-control" readonly>
-                    <button id="btnCopyLink" class="btn btn-primary"><i data-lucide="copy"></i></button>
-                </div>
-                <p class="text-sm text-muted">แชร์ลิงก์นี้ลงใน Instagram Story ของคุณเพื่อให้เพื่อนๆ ส่งข้อความมาหา</p>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>กล่องข้อความ (<span id="msgCount">0</span>)</h3>
-            </div>
-
-            <div id="messagesList">
-                <!-- Messages will be injected here -->
-            </div>
-        </section>
-
-        <!-- View: Settings -->
-        <section id="view-settings" class="view-section">
-            <div class="card">
-                <h2 class="mb-4">ตั้งค่าโปรไฟล์</h2>
-                <form id="settingsForm">
-                    <div class="form-group">
-                        <label class="form-label">ชื่อที่แสดง (Display Name)</label>
-                        <input type="text" id="setDisplayName" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">ข้อความต้อนรับหน้าโปรไฟล์</label>
-                        <textarea id="setBio" class="form-control" placeholder="ส่งข้อความอะไรมาก็ได้..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">เปิดรับข้อความ</label>
-                        <select id="setIsAccepting" class="form-control">
-                            <option value="true">เปิดรับปกติ</option>
-                            <option value="false">ปิดรับชั่วคราว</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-full mt-4" id="btnSaveSettings">บันทึกการตั้งค่า</button>
-                </form>
-            </div>
-        </section>
-
-        <!-- View: Public Profile (Send Message) -->
-        <section id="view-public" class="view-section">
-            <div id="publicProfileContent" class="card">
-                <div class="profile-header">
-                    <div class="avatar-circle" id="pubAvatar">?</div>
-                    <h2 id="pubDisplayName">กำลังโหลด...</h2>
-                    <p class="text-muted mt-4" id="pubBio">...</p>
-                </div>
-
-                <form id="sendMessageForm">
-                    <div class="form-group">
-                        <textarea id="msgContent" class="form-control" placeholder="พิมพ์ข้อความของคุณที่นี่... (ไม่ระบุตัวตน)" required maxlength="500"></textarea>
-                        <div class="text-sm text-muted" style="text-align: right; margin-top: 0.5rem;"><span id="msgCharCount">0</span>/500</div>
-                    </div>
-                    <button type="submit" id="btnSendMsg" class="btn btn-primary w-full mt-4">ส่งข้อความนิรนาม</button>
-                </form>
-                <div class="text-center mt-4 text-sm text-muted">
-                    <i data-lucide="shield-check" style="width:16px;height:16px;vertical-align:middle;"></i> การส่งข้อความนี้ปลอดภัยและไม่เปิดเผยตัวตน 100%
-                </div>
-            </div>
-            
-            <div id="publicNotFound" class="card empty-state" style="display: none;">
-                <i data-lucide="user-x"></i>
-                <h3>ไม่พบผู้ใช้งานนี้</h3>
-                <p>โปรไฟล์นี้อาจถูกลบหรือไม่มีอยู่จริง</p>
-                <a href="#/" class="btn btn-outline mt-4">กลับหน้าแรก</a>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Custom Modal -->
-    <div id="customModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Title</h3>
-                <button class="close-modal" id="btnModalCloseTop"><i data-lucide="x"></i></button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                Content
-            </div>
-            <div class="modal-footer" id="modalFooter">
-                <button class="btn btn-outline close-modal" id="btnModalCancel">ยกเลิก</button>
-                <button class="btn btn-primary" id="btnModalConfirm">ตกลง</button>
-            </div>
-        </div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="#" id="brandHome" class="brand" style="text-decoration:none;color:inherit">
+        <span class="brand-mark" aria-hidden="true">W</span>
+        <span>Whispr</span>
+      </a>
+      <div class="row">
+        <span id="connectionState" class="badge">กำลังเชื่อมต่อ</span>
+        <button id="themeToggle" class="btn btn-small" type="button" aria-label="เปลี่ยนธีม">เปลี่ยนธีม</button>
+        <button id="headerAuthButton" class="btn btn-primary btn-small" type="button">เข้าสู่ระบบ</button>
+      </div>
     </div>
+  </header>
 
-    <!-- Firebase SDK (Modular v10) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  <main class="container">
+    <section id="heroSection" class="hero">
+      <h1>ข้อความที่พูดได้อย่างสบายใจ</h1>
+      <p>รับข้อความนิรนาม ตอบกลับด้วยสไตล์ของคุณ และแบ่งปันเฉพาะสิ่งที่คุณเลือก</p>
+    </section>
 
-        // ==========================================
-        // ⚠️ นำ Firebase Config ของคุณมาวางที่นี่ ⚠️
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgXW8PUFkXpiSQmZ77STldOegKsemVQlo",
-            authDomain: "anonmsg-16fb0.firebaseapp.com",
-            projectId: "anonmsg-16fb0",
-            storageBucket: "anonmsg-16fb0.firebasestorage.app",
-            messagingSenderId: "466700540800",
-            appId: "1:466700540800:web:ef8bf8cf1cb1db721dbf65"
-        };
+    <section id="publicProfileView" class="panel hidden">
+      <div class="profile-head">
+        <img id="publicAvatar" class="avatar avatar-large" alt="รูปโปรไฟล์">
+        <div style="min-width:0">
+          <h2 id="publicDisplayName">โปรไฟล์</h2>
+          <div id="publicUsername" class="muted"></div>
+          <p id="publicBio" class="muted break"></p>
+        </div>
+      </div>
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+      <div id="publicClosedNotice" class="notice hidden" style="margin-top:18px">
+        บัญชีนี้ปิดรับข้อความชั่วคราว
+      </div>
 
-        // Global State
-        let currentUser = null;
-        let userData = null;
-        let isLoginMode = true;
-        let unsubMessages = null;
-        let currentPublicUserId = null;
+      <form id="anonymousMessageForm" class="stack" style="margin-top:20px">
+        <div class="field">
+          <label for="anonymousText">ส่งข้อความนิรนาม</label>
+          <textarea id="anonymousText" maxlength="2000" required
+            placeholder="เขียนข้อความที่ต้องการส่ง..." aria-describedby="messageCounter"></textarea>
+          <div class="between small muted">
+            <span id="messageCounter">0 / 2000</span>
+            <span>ไม่จำเป็นต้องสมัครสมาชิก</span>
+          </div>
+        </div>
 
-        // UI Utilities
-        const showToast = (message, type = 'success') => {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}"></i> <span>${message}</span>`;
-            container.appendChild(toast);
-            lucide.createIcons({root: toast});
-            
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        };
+        <div class="row">
+          <button id="randomQuestionButton" type="button" class="btn">สุ่มคำถาม</button>
+          <select id="questionCategory" class="control" style="width:auto;max-width:100%" aria-label="หมวดหมู่คำถาม">
+            <option value="all">ทุกหมวดหมู่</option>
+            <option value="fun">สนุกสนาน</option>
+            <option value="friendship">มิตรภาพ</option>
+            <option value="memory">ความทรงจำ</option>
+            <option value="interest">ความชอบ</option>
+            <option value="general">ทั่วไป</option>
+          </select>
+        </div>
 
-        const showModal = (title, content, confirmText, onConfirm, isDanger = false) => {
-            const modal = document.getElementById('customModal');
-            document.getElementById('modalTitle').textContent = title;
-            
-            if (typeof content === 'string') {
-                document.getElementById('modalBody').innerHTML = content;
-            } else {
-                document.getElementById('modalBody').innerHTML = '';
-                document.getElementById('modalBody').appendChild(content);
-            }
+        <div class="field">
+          <label for="anonymousImage">แนบรูปภาพ (ไม่บังคับ)</label>
+          <input id="anonymousImage" type="file" accept="image/jpeg,image/png,image/webp">
+          <div id="anonymousImagePreview" class="attachment"></div>
+        </div>
 
-            const btnConfirm = document.getElementById('btnModalConfirm');
-            btnConfirm.textContent = confirmText;
-            btnConfirm.className = `btn ${isDanger ? 'btn-danger' : 'btn-primary'}`;
-            
-            const handleConfirm = () => {
-                onConfirm();
-                closeModal();
-                btnConfirm.removeEventListener('click', handleConfirm);
-            };
-            
-            // Clear old listeners by cloning
-            const newBtnConfirm = btnConfirm.cloneNode(true);
-            btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
-            newBtnConfirm.addEventListener('click', handleConfirm);
+        <div class="field">
+          <label for="anonymousAudio">แนบไฟล์เสียงที่บันทึกไว้ (ไม่บังคับ)</label>
+          <input id="anonymousAudio" type="file" accept="audio/webm,audio/ogg,audio/mp4,audio/mpeg,audio/wav">
+          <div id="anonymousAudioPreview" class="attachment"></div>
+        </div>
 
-            modal.classList.add('active');
-        };
+        <div class="notice">
+          ข้อความจะถูกส่งแบบนิรนาม ระบบอาจแสดงคำใบ้โดยประมาณเกี่ยวกับอุปกรณ์หรือเบราว์เซอร์
+          แต่จะไม่แสดง IP Address หรือระบุตำแหน่งจริงให้ผู้รับ
+        </div>
 
-        const closeModal = () => document.getElementById('customModal').classList.remove('active');
-        document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', closeModal));
+        <button id="sendAnonymousButton" class="btn btn-primary full" type="submit">ส่งข้อความ</button>
+        <div id="anonymousSendStatus" role="status" aria-live="polite"></div>
+      </form>
 
-        // Router & View Management
-        const switchView = (viewId) => {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            lucide.createIcons();
-        };
+      <section id="publicWallSection" class="stack hidden" style="margin-top:26px">
+        <div class="between">
+          <h2 style="margin:0">Public Wall</h2>
+          <span class="badge">ข้อความที่เจ้าของเลือกเผยแพร่</span>
+        </div>
+        <div id="publicWallList" class="wall-grid"></div>
+      </section>
+    </section>
 
-        const handleRoute = () => {
-            const hash = window.location.hash;
-            if (hash === '#/login' || hash === '#/register') {
-                if (currentUser) {
-                    window.location.hash = '#/dashboard';
-                    return;
-                }
-                isLoginMode = hash === '#/login';
-                document.getElementById('authTitle').textContent = isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
-                document.getElementById('authSubmitBtn').textContent = isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
-                document.getElementById('groupUsername').style.display = isLoginMode ? 'none' : 'block';
-                document.getElementById('authUsername').required = !isLoginMode;
-                document.getElementById('authToggleText').innerHTML = isLoginMode 
-                    ? 'ยังไม่มีบัญชี? <a href="#/register">สมัครสมาชิก</a>' 
-                    : 'มีบัญชีแล้ว? <a href="#/login">เข้าสู่ระบบ</a>';
-                switchView('view-auth');
-            } else if (hash === '#/dashboard') {
-                if (!currentUser) return window.location.hash = '#/login';
-                switchView('view-dashboard');
-                initDashboard();
-            } else if (hash === '#/settings') {
-                if (!currentUser) return window.location.hash = '#/login';
-                switchView('view-settings');
-                initSettings();
-            } else if (hash.startsWith('#/u/')) {
-                const username = hash.split('/')[2];
-                initPublicProfile(username);
-            } else {
-                switchView('view-home');
-            }
-        };
+    <section id="authView" class="panel hidden">
+      <h2 id="authHeading">เข้าสู่ระบบ</h2>
+      <p class="muted">ใช้บัญชีของคุณเพื่อจัดการกล่องข้อความและโปรไฟล์</p>
+      <form id="authForm" class="stack">
+        <div class="field">
+          <label for="authEmail">อีเมล</label>
+          <input id="authEmail" type="email" autocomplete="email" required maxlength="254">
+        </div>
+        <div class="field">
+          <label for="authPassword">รหัสผ่าน</label>
+          <input id="authPassword" type="password" autocomplete="current-password" required minlength="6" maxlength="128">
+        </div>
+        <div class="field hidden" id="registerUsernameField">
+          <label for="registerUsername">Username</label>
+          <input id="registerUsername" type="text" autocomplete="username" minlength="3" maxlength="24"
+            pattern="[A-Za-z0-9_]+" placeholder="เช่น myusername">
+          <span class="muted small">ใช้ตัวอักษรภาษาอังกฤษ ตัวเลข และ _ ความยาว 3–24 ตัว</span>
+        </div>
+        <div class="field hidden" id="registerDisplayNameField">
+          <label for="registerDisplayName">ชื่อที่แสดง</label>
+          <input id="registerDisplayName" type="text" maxlength="60">
+        </div>
+        <button id="authSubmitButton" type="submit" class="btn btn-primary full">เข้าสู่ระบบ</button>
+      </form>
+      <div class="row" style="margin-top:12px">
+        <button id="switchAuthMode" class="btn" type="button">สร้างบัญชี</button>
+        <button id="resetPasswordButton" class="btn" type="button">ลืมรหัสผ่าน</button>
+      </div>
+      <div id="authStatus" class="notice hidden" style="margin-top:14px" role="status" aria-live="polite"></div>
+    </section>
 
-        window.addEventListener('hashchange', handleRoute);
+    <section id="dashboardView" class="hidden">
+      <div class="mobile-nav" id="mobileNavigation"></div>
 
-        // Auth State Observer
-        onAuthStateChanged(auth, async (user) => {
-            currentUser = user;
-            const navAuth = document.getElementById('navAuthLinks');
-            const navUser = document.getElementById('navUserLinks');
+      <div class="layout">
+        <aside class="sidebar" id="sidebarNavigation" aria-label="เมนูหลัก"></aside>
 
-            if (user) {
-                navAuth.style.display = 'none';
-                navUser.style.display = 'flex';
-                // Fetch User Profile Data
-                const docRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    userData = docSnap.data();
-                }
-                // Redirect if on auth pages
-                if(window.location.hash === '#/login' || window.location.hash === '#/register' || window.location.hash === '') {
-                    window.location.hash = '#/dashboard';
-                } else {
-                    handleRoute();
-                }
-            } else {
-                navAuth.style.display = 'flex';
-                navUser.style.display = 'none';
-                userData = null;
-                if(unsubMessages) unsubMessages();
-                if(window.location.hash === '#/dashboard' || window.location.hash === '#/settings') {
-                    window.location.hash = '#/';
-                } else {
-                    handleRoute();
-                }
-            }
-        });
-
-        // Authentication Handlers
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('authEmail').value.trim();
-            const password = document.getElementById('authPassword').value;
-            const btn = document.getElementById('authSubmitBtn');
-            const ogText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'กำลังดำเนินการ...';
-
-            try {
-                if (isLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                    showToast('เข้าสู่ระบบสำเร็จ');
-                } else {
-                    const username = document.getElementById('authUsername').value.trim().toLowerCase();
-                    // Check if username exists (Client side check, should be backed by rules)
-                    const q = query(collection(db, "users"), where("username", "==", username));
-                    const querySnapshot = await getDocs(q);
-                    if (!querySnapshot.empty) {
-                        throw new Error("ชื่อผู้ใช้นี้ถูกใช้งานแล้ว");
-                    }
-
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    
-                    // Create Profile in Firestore
-                    await setDoc(doc(db, "users", user.uid), {
-                        uid: user.uid,
-                        username: username,
-                        displayName: username,
-                        email: email,
-                        bio: "ส่งข้อความอะไรมาก็ได้...",
-                        isAccepting: true,
-                        createdAt: serverTimestamp()
-                    });
-                    showToast('สมัครสมาชิกสำเร็จ');
-                }
-                e.target.reset();
-            } catch (error) {
-                showToast(error.message.includes('auth/invalid') ? 'ข้อมูลไม่ถูกต้อง' : error.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = ogText;
-            }
-        });
-
-        document.getElementById('btnLogout').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                showToast('ออกจากระบบแล้ว');
-                window.location.hash = '#/';
-            });
-        });
-
-        // Dashboard (Inbox) Logic
-        const initDashboard = () => {
-            if (!userData) return setTimeout(initDashboard, 500); // Wait for data
-            
-            const profileLink = `${window.location.origin}${window.location.pathname}#/u/${userData.username}`;
-            document.getElementById('shareLinkInput').value = profileLink;
-            
-            const q = query(
-                collection(db, "messages"), 
-                where("recipient_id", "==", currentUser.uid),
-                orderBy("createdAt", "desc")
-            );
-
-            const listEl = document.getElementById('messagesList');
-            listEl.innerHTML = `
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-            `;
-
-            if(unsubMessages) unsubMessages();
-
-            unsubMessages = onSnapshot(q, (snapshot) => {
-                document.getElementById('msgCount').textContent = snapshot.size;
-                listEl.innerHTML = '';
-                
-                if (snapshot.empty) {
-                    listEl.innerHTML = `
-                        <div class="empty-state">
-                            <i data-lucide="inbox"></i>
-                            <h3>ยังไม่มีข้อความ</h3>
-                            <p>แชร์ลิงก์ของคุณให้เพื่อนๆ เพื่อเริ่มรับข้อความแรก</p>
-                        </div>
-                    `;
-                    lucide.createIcons();
-                    return;
-                }
-
-                snapshot.forEach((docSnap) => {
-                    const msg = docSnap.data();
-                    const msgId = docSnap.id;
-                    const date = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleString('th-TH') : 'กำลังส่ง...';
-
-                    const div = document.createElement('div');
-                    div.className = 'message-item';
-                    div.innerHTML = `
-                        <div class="message-header">
-                            <span>นิรนาม</span>
-                            <span>${date}</span>
-                        </div>
-                        <div class="message-content">${escapeHTML(msg.content)}</div>
-                        <div class="message-actions">
-                            <button class="btn btn-outline btn-sm btn-story" data-id="${msgId}" data-content="${escapeHTML(msg.content)}">
-                                <i data-lucide="instagram"></i> แชร์ Story
-                            </button>
-                            <button class="btn btn-danger btn-sm btn-delete" data-id="${msgId}">
-                                <i data-lucide="trash-2"></i> ลบ
-                            </button>
-                        </div>
-                    `;
-                    listEl.appendChild(div);
-                });
-                lucide.createIcons();
-
-                // Attach Events for generated buttons
-                document.querySelectorAll('.btn-delete').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.currentTarget.dataset.id;
-                        showModal('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบข้อความนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้', 'ลบข้อความ', async () => {
-                            try {
-                                await deleteDoc(doc(db, "messages", id));
-                                showToast('ลบข้อความแล้ว');
-                            } catch (err) {
-                                showToast('เกิดข้อผิดพลาดในการลบ', 'error');
-                            }
-                        }, true);
-                    });
-                });
-
-                document.querySelectorAll('.btn-story').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const content = e.currentTarget.dataset.content;
-                        generateStoryAndShowModal(content);
-                    });
-                });
-            });
-        };
-
-        document.getElementById('btnCopyLink').addEventListener('click', () => {
-            const link = document.getElementById('shareLinkInput');
-            link.select();
-            document.execCommand('copy');
-            showToast('คัดลอกลิงก์แล้ว');
-        });
-
-        // Settings Logic
-        const initSettings = () => {
-            if (!userData) return setTimeout(initSettings, 500);
-            document.getElementById('setDisplayName').value = userData.displayName || '';
-            document.getElementById('setBio').value = userData.bio || '';
-            document.getElementById('setIsAccepting').value = userData.isAccepting !== false ? 'true' : 'false';
-        };
-
-        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnSaveSettings');
-            btn.disabled = true;
-            btn.textContent = 'กำลังบันทึก...';
-            try {
-                await updateDoc(doc(db, "users", currentUser.uid), {
-                    displayName: document.getElementById('setDisplayName').value.trim(),
-                    bio: document.getElementById('setBio').value.trim(),
-                    isAccepting: document.getElementById('setIsAccepting').value === 'true'
-                });
-                // Update local memory
-                userData.displayName = document.getElementById('setDisplayName').value.trim();
-                showToast('บันทึกการตั้งค่าสำเร็จ');
-            } catch (error) {
-                showToast('เกิดข้อผิดพลาด', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'บันทึกการตั้งค่า';
-            }
-        });
-
-        // Public Profile Logic (Send Message)
-        const initPublicProfile = async (username) => {
-            switchView('view-public');
-            document.getElementById('publicProfileContent').style.display = 'none';
-            document.getElementById('publicNotFound').style.display = 'none';
-            currentPublicUserId = null;
-
-            try {
-                // We use dynamic import structure for query to find user by username
-                const { getDocs, query, collection, where } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-                const q = query(collection(db, "users"), where("username", "==", username));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    document.getElementById('publicNotFound').style.display = 'block';
-                    return;
-                }
-
-                const pubUserDoc = querySnapshot.docs[0];
-                const pubUser = pubUserDoc.data();
-                currentPublicUserId = pubUserDoc.id;
-
-                document.getElementById('pubDisplayName').textContent = pubUser.displayName;
-                document.getElementById('pubAvatar').textContent = pubUser.displayName.charAt(0).toUpperCase();
-                document.getElementById('pubBio').textContent = pubUser.bio;
-                
-                const form = document.getElementById('sendMessageForm');
-                const btn = document.getElementById('btnSendMsg');
-                
-                if (pubUser.isAccepting === false) {
-                    form.style.display = 'none';
-                    document.getElementById('pubBio').textContent = '⚠️ ขณะนี้โปรไฟล์นี้ปิดรับข้อความ';
-                } else {
-                    form.style.display = 'block';
-                    btn.disabled = false;
-                    document.getElementById('msgContent').value = '';
-                    document.getElementById('msgCharCount').textContent = '0';
-                }
-
-                document.getElementById('publicProfileContent').style.display = 'block';
-            } catch (error) {
-                console.error(error);
-                showToast('ไม่สามารถดึงข้อมูลโปรไฟล์ได้', 'error');
-            }
-        };
-
-        // Textarea char count
-        document.getElementById('msgContent').addEventListener('input', (e) => {
-            document.getElementById('msgCharCount').textContent = e.target.value.length;
-        });
-
-        // Submit Message
-        document.getElementById('sendMessageForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if(!currentPublicUserId) return;
-
-            const content = document.getElementById('msgContent').value.trim();
-            if(!content) return showToast('กรุณาพิมพ์ข้อความ', 'error');
-
-            const btn = document.getElementById('btnSendMsg');
-            btn.disabled = true;
-            btn.textContent = 'กำลังส่ง...';
-
-            try {
-                await addDoc(collection(db, "messages"), {
-                    recipient_id: currentPublicUserId,
-                    content: content,
-                    createdAt: serverTimestamp(),
-                    isRead: false
-                });
-                
-                showToast('ส่งข้อความสำเร็จ!');
-                document.getElementById('msgContent').value = '';
-                document.getElementById('msgCharCount').textContent = '0';
-            } catch (error) {
-                showToast('ไม่สามารถส่งข้อความได้ กรุณาลองใหม่', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'ส่งข้อความนิรนาม';
-            }
-        });
-
-        // Story Image Generator (Canvas API)
-        const generateStoryAndShowModal = (text) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1080;
-            canvas.height = 1920;
-            const ctx = canvas.getContext('2d');
-
-            // Background Gradient (Dark/Modern)
-            const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
-            gradient.addColorStop(0, '#0f172a');
-            gradient.addColorStop(1, '#1e293b');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Card Background
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.shadowColor = 'rgba(0,0,0,0.2)';
-            ctx.shadowBlur = 30;
-            roundRect(ctx, 140, 600, 800, 720, 40);
-            ctx.fill();
-            ctx.shadowColor = 'transparent'; // reset
-
-            // Card Header (App Name / Prompt)
-            ctx.font = '500 40px Inter';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.textAlign = 'center';
-            ctx.fillText('มีคนส่งข้อความนิรนามถึงคุณ', 540, 700);
-
-            // Text Wrapper Logic
-            ctx.font = '600 64px Noto Sans Thai, Inter';
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const maxWidth = 640;
-            const lineHeight = 85;
-            const words = text.split(' ');
-            let line = '';
-            let lines = [];
-
-            for (let n = 0; n < words.length; n++) {
-                let testLine = line + words[n] + ' ';
-                let metrics = ctx.measureText(testLine);
-                let testWidth = metrics.width;
-                if (testWidth > maxWidth && n > 0) {
-                    lines.push(line);
-                    line = words[n] + ' ';
-                } else {
-                    line = testLine;
-                }
-            }
-            lines.push(line);
-
-            // Draw Text centered vertically in card
-            let startY = 960 - ((lines.length - 1) * lineHeight) / 2;
-            for(let k=0; k<lines.length; k++) {
-                ctx.fillText(lines[k], 540, startY + (k * lineHeight));
-            }
-
-            // Branding at bottom
-            ctx.font = '600 45px Inter';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.fillText('AnonMSG.com', 540, 1750);
-
-            const dataUrl = canvas.toDataURL('image/png');
-            
-            // Build Modal Content
-            const container = document.createElement('div');
-            container.innerHTML = `
-                <div id="storyPreviewContainer">
-                    <img id="storyCanvas" src="${dataUrl}" alt="Story Preview">
+        <div class="main">
+          <section id="view-overview" class="view-section">
+            <div class="panel">
+              <div class="between">
+                <div>
+                  <h2>ภาพรวมบัญชี</h2>
+                  <p class="muted">จัดการข้อความและโปรไฟล์ของคุณในที่เดียว</p>
                 </div>
-                <p class="text-sm text-muted text-center mt-4">บันทึกภาพนี้และแชร์ลง Instagram Story พร้อมแนบลิงก์โปรไฟล์ของคุณจากสติกเกอร์ Link</p>
-            `;
+                <button id="refreshDashboardButton" class="btn btn-small" type="button">รีเฟรช</button>
+              </div>
+              <div id="dashboardProfile" class="profile-head" style="margin:18px 0">
+                <img id="dashboardAvatar" class="avatar" alt="รูปโปรไฟล์">
+                <div>
+                  <h3 id="dashboardName">กำลังโหลด</h3>
+                  <div id="dashboardHandle" class="muted"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label for="shareLink">ลิงก์รับข้อความของคุณ</label>
+                <input id="shareLink" readonly>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <button id="copyShareLinkButton" type="button" class="btn btn-primary">คัดลอกลิงก์</button>
+                <button id="openPublicProfileButton" type="button" class="btn">ดูหน้าโปรไฟล์</button>
+              </div>
+            </div>
 
-            showModal('แชร์ข้อความลง Story', container, 'ดาวน์โหลดภาพ (PNG)', () => {
-                const a = document.createElement('a');
-                a.href = dataUrl;
-                a.download = `story_${Date.now()}.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast('ดาวน์โหลดรูปภาพสำเร็จ');
+            <div class="grid-3" id="overviewStats">
+              <div class="stat"><div id="statTotal" class="value">—</div><div class="label">ข้อความทั้งหมด</div></div>
+              <div class="stat"><div id="statUnread" class="value">—</div><div class="label">ข้อความใหม่</div></div>
+              <div class="stat"><div id="statWall" class="value">—</div><div class="label">ข้อความบน Wall</div></div>
+            </div>
+
+            <div class="panel" style="margin-top:18px">
+              <h2>ข้อความล่าสุด</h2>
+              <div id="recentMessages" class="message-list"></div>
+            </div>
+          </section>
+
+          <section id="view-inbox" class="view-section hidden">
+            <div class="panel">
+              <div class="between">
+                <h2>กล่องข้อความ</h2>
+                <button id="refreshInboxButton" class="btn btn-small" type="button">รีเฟรช</button>
+              </div>
+              <div class="grid-2" style="margin-bottom:14px">
+                <div class="field">
+                  <label for="inboxSearch">ค้นหาข้อความ</label>
+                  <input id="inboxSearch" type="search" placeholder="ค้นหาจากเนื้อหา">
+                </div>
+                <div class="field">
+                  <label for="inboxStatusFilter">สถานะ</label>
+                  <select id="inboxStatusFilter">
+                    <option value="all">ทั้งหมด</option>
+                    <option value="unread">ยังไม่อ่าน</option>
+                    <option value="read">อ่านแล้ว</option>
+                    <option value="pinned">ปักหมุด</option>
+                    <option value="archived">Archive</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-2" style="margin-bottom:14px">
+                <div class="field">
+                  <label for="inboxDateFrom">ตั้งแต่วันที่</label>
+                  <input id="inboxDateFrom" type="date">
+                </div>
+                <div class="field">
+                  <label for="inboxDateTo">ถึงวันที่</label>
+                  <input id="inboxDateTo" type="date">
+                </div>
+              </div>
+              <div class="row" style="margin-bottom:14px">
+                <button id="applyInboxFiltersButton" class="btn btn-primary" type="button">ใช้ตัวกรอง</button>
+                <button id="clearInboxFiltersButton" class="btn" type="button">ล้างตัวกรอง</button>
+              </div>
+              <div id="inboxList" class="message-list"></div>
+              <button id="loadMoreMessagesButton" class="btn full hidden" type="button" style="margin-top:14px">โหลดข้อความเพิ่มเติม</button>
+            </div>
+          </section>
+
+          <section id="view-wall" class="view-section hidden">
+            <div class="panel">
+              <div class="between">
+                <h2>Public Wall</h2>
+                <label class="checkline"><input id="wallEnabledToggle" type="checkbox"> เปิดใช้งาน Wall</label>
+              </div>
+              <p class="muted">ข้อความส่วนตัวจะไม่ถูกเผยแพร่จนกว่าคุณจะเลือกและยืนยันเอง</p>
+              <div id="myWallList" class="wall-grid"></div>
+            </div>
+          </section>
+
+          <section id="view-analytics" class="view-section hidden">
+            <div class="panel">
+              <div class="between">
+                <h2>สถิติการใช้งาน</h2>
+                <select id="analyticsPeriod" class="control" style="width:auto">
+                  <option value="7">7 วัน</option>
+                  <option value="30" selected>30 วัน</option>
+                  <option value="90">90 วัน</option>
+                </select>
+              </div>
+              <div class="grid-3" id="analyticsStats">
+                <div class="stat"><div class="value" id="analyticsTotal">—</div><div class="label">ข้อความทั้งหมด</div></div>
+                <div class="stat"><div class="value" id="analyticsReplies">—</div><div class="label">ข้อความที่ตอบกลับ</div></div>
+                <div class="stat"><div class="value" id="analyticsReactions">—</div><div class="label">Reaction</div></div>
+              </div>
+              <h3 style="margin-top:22px">จำนวนข้อความรายวัน</h3>
+              <div id="analyticsChart" class="chart-wrap"></div>
+              <h3 style="margin-top:22px">Word Cloud</h3>
+              <p class="muted small">แสดงคำที่พบบ่อยจากข้อมูลที่ Backend อนุญาตให้ใช้เท่านั้น</p>
+              <div id="wordCloud" class="word-cloud"></div>
+            </div>
+          </section>
+
+          <section id="view-settings" class="view-section hidden">
+            <div class="panel">
+              <h2>ตั้งค่าโปรไฟล์</h2>
+              <form id="profileForm" class="stack">
+                <div class="field">
+                  <label for="profilePhoto">รูปโปรไฟล์</label>
+                  <input id="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp">
+                  <div class="row">
+                    <img id="profilePhotoPreview" class="avatar" alt="ตัวอย่างรูปโปรไฟล์">
+                    <button id="removeProfilePhotoButton" type="button" class="btn btn-small">ลบรูปโปรไฟล์</button>
+                  </div>
+                  <div id="profileUploadStatus" class="muted small"></div>
+                </div>
+                <div class="field">
+                  <label for="profileDisplayName">ชื่อที่แสดง</label>
+                  <input id="profileDisplayName" maxlength="60" required>
+                </div>
+                <div class="field">
+                  <label for="profileUsername">Username</label>
+                  <input id="profileUsername" maxlength="24" minlength="3" pattern="[A-Za-z0-9_]+" required>
+                  <span class="muted small">การเปลี่ยนชื่อจะต้องผ่านการจองชื่อจาก Backend</span>
+                </div>
+                <div class="field">
+                  <label for="profileBio">Bio</label>
+                  <textarea id="profileBio" maxlength="240"></textarea>
+                </div>
+                <div class="field">
+                  <label for="profileTheme">ธีมโปรไฟล์</label>
+                  <select id="profileTheme">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="violet">Violet</option>
+                    <option value="pastel">Pastel</option>
+                  </select>
+                </div>
+                <label class="checkline"><input id="acceptMessagesToggle" type="checkbox"> เปิดรับข้อความ</label>
+                <label class="checkline"><input id="profilePublicToggle" type="checkbox"> แสดงโปรไฟล์สาธารณะ</label>
+                <label class="checkline"><input id="showHintsToggle" type="checkbox"> แสดงคำใบ้โดยประมาณ</label>
+                <label class="checkline"><input id="wallVisibilityToggle" type="checkbox"> เปิด Public Wall</label>
+                <button type="submit" class="btn btn-primary">บันทึกการตั้งค่า</button>
+              </form>
+            </div>
+
+            <div class="panel">
+              <h2>จัดการบล็อก</h2>
+              <p class="muted small">การบล็อกใช้ Anonymous Sender Token ซึ่งอาจถูกเปลี่ยนได้หากผู้ส่งล้างข้อมูลหรือเปลี่ยนอุปกรณ์</p>
+              <div id="blockedTokensList" class="message-list"></div>
+            </div>
+
+            <div class="panel">
+              <h2>บัญชีและความปลอดภัย</h2>
+              <div id="accountSecurityInfo" class="notice"></div>
+              <div class="row" style="margin-top:12px">
+                <button id="verifyEmailButton" type="button" class="btn">ส่งอีเมลยืนยัน</button>
+                <button id="changePasswordResetButton" type="button" class="btn">ส่งลิงก์ตั้งรหัสผ่านใหม่</button>
+                <button id="deleteAccountButton" type="button" class="btn btn-danger">ลบบัญชี</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="view-account" class="view-section hidden">
+            <div class="panel">
+              <h2>บัญชีของฉัน</h2>
+              <p id="accountEmail"></p>
+              <p id="accountVerificationStatus" class="muted"></p>
+              <div class="row">
+                <button id="accountSignOutButton" class="btn btn-danger" type="button">ออกจากระบบ</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="signedOutLanding" class="panel">
+      <h2>เริ่มต้นใช้งาน Whispr</h2>
+      <p class="muted">สร้างบัญชีเพื่อรับข้อความของคุณเอง หรือเปิดลิงก์โปรไฟล์ของคนที่คุณต้องการส่งข้อความให้</p>
+      <div class="row">
+        <button id="landingLoginButton" class="btn btn-primary" type="button">เข้าสู่ระบบ</button>
+        <button id="landingRegisterButton" class="btn" type="button">สมัครสมาชิก</button>
+      </div>
+    </section>
+
+    <div class="footer">
+      Whispr · ส่งข้อความด้วยความเคารพ · อย่าใช้ระบบเพื่อคุกคามหรือเปิดเผยข้อมูลส่วนตัวของผู้อื่น
+    </div>
+  </main>
+
+  <div id="toastArea" class="toast-area" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden" role="presentation">
+    <section id="modalContent" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="between">
+        <h2 id="modalTitle">รายละเอียด</h2>
+        <button id="modalCloseButton" class="btn btn-small" type="button" aria-label="ปิดหน้าต่าง">ปิด</button>
+      </div>
+      <div id="modalBody"></div>
+      <div id="modalActions" class="modal-actions"></div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      sendEmailVerification,
+      sendPasswordResetEmail,
+      deleteUser,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      collection,
+      query,
+      where,
+      orderBy,
+      limit,
+      startAfter,
+      getDocs,
+      onSnapshot,
+      serverTimestamp,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL,
+      deleteObject
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js";
+    import {
+      getFunctions,
+      httpsCallable
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
+    import {
+      initializeAppCheck,
+      ReCaptchaV3Provider
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAuafJFSxf5MH2wG8UO5er14peRwT1jl8g",
+      authDomain: "anonmsg-7fc77.firebaseapp.com",
+      projectId: "anonmsg-7fc77",
+      storageBucket: "anonmsg-7fc77.firebasestorage.app",
+      messagingSenderId: "619051284089",
+      appId: "1:619051284089:web:599084ffeeedf557de46a8",
+      measurementId: "G-367T0PCVBJ"
+    };
+
+    /*
+      ตั้งค่าก่อน Deploy:
+      1. กำหนด FUNCTIONS_REGION ให้ตรงกับ Region ที่ Deploy Cloud Functions
+      2. หากเปิด App Check ให้ใส่ ReCAPTCHA v3 site key ใน APP_CHECK_SITE_KEY
+      3. สร้าง Callable Functions ที่ระบุไว้ใน REQUIRED_BACKEND_FUNCTIONS
+      4. Deploy Firestore Rules และ Storage Rules ให้ตรงกับ Data Model
+      5. ห้ามนำ ImgBB API key หรือ Secret ของ Backend มาใส่ในไฟล์นี้
+    */
+
+    const FUNCTIONS_REGION = "asia-southeast1";
+    const APP_CHECK_SITE_KEY = "";
+    const MAX_MESSAGE_LENGTH = 2000;
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+    const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
+    const MAX_AUDIO_SECONDS = 90;
+    const PAGE_SIZE = 20;
+    const DEFAULT_AVATAR =
+      "data:image/svg+xml;charset=UTF-8," +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" rx="80" fill="#e8eaf3"/><circle cx="80" cy="60" r="29" fill="#a3a9bd"/><path d="M27 145c4-32 24-48 53-48s49 16 53 48" fill="#a3a9bd"/></svg>'
+      );
+
+    const REQUIRED_BACKEND_FUNCTIONS = [
+      "sendAnonymousMessage",
+      "reserveUsername",
+      "submitReply",
+      "publishWallMessage",
+      "toggleReaction",
+      "blockSenderToken",
+      "submitReport",
+      "getUserAnalytics",
+      "createAnonymousUpload",
+      "adminDeleteAccount"
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const functions = getFunctions(app, FUNCTIONS_REGION);
+
+    if (APP_CHECK_SITE_KEY && APP_CHECK_SITE_KEY.trim()) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY.trim()),
+        isTokenAutoRefreshEnabled: true
+      });
+    }
+
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      user: null,
+      userDoc: null,
+      publicProfile: null,
+      publicUid: null,
+      authMode: "login",
+      activeView: "overview",
+      messages: [],
+      filteredMessages: [],
+      lastMessageDoc: null,
+      hasMoreMessages: false,
+      wallItems: [],
+      blockedTokens: [],
+      analytics: null,
+      profilePhotoFile: null,
+      profilePhotoURL: "",
+      pendingImageFile: null,
+      pendingAudioFile: null,
+      currentUploadTask: null,
+      currentRecorder: null,
+      currentAudioStream: null,
+      recorderChunks: [],
+      recorderStartedAt: 0,
+      recorderTimer: null,
+      storyMessage: null,
+      storyReply: "",
+      storyTheme: "light",
+      storySettings: {
+        background: "#f5f0ff",
+        textColor: "#211d35",
+        showUsername: true,
+        showBrand: true,
+        fontSize: 38,
+        cardStyle: "rounded",
+        alignment: "center"
+      },
+      questionUsed: new Set(),
+      questions: [
+        { category: "fun", text: "ถ้าเลือกมีพลังพิเศษได้หนึ่งอย่าง จะเลือกอะไร?" },
+        { category: "fun", text: "ถ้าพรุ่งนี้หยุดได้ทั้งวัน อยากทำอะไร?" },
+        { category: "fun", text: "เรื่องตลกอะไรที่ยังทำให้หัวเราะได้ทุกครั้ง?" },
+        { category: "fun", text: "ถ้าต้องกินอาหารเมนูเดียวหนึ่งสัปดาห์ จะเลือกอะไร?" },
+        { category: "fun", text: "ถ้าชีวิตเป็นหนังหนึ่งเรื่อง คิดว่าชื่อเรื่องอะไร?" },
+        { category: "fun", text: "ถ้าสลับชีวิตกับตัวละครได้หนึ่งวัน จะเลือกใคร?" },
+        { category: "fun", text: "ความสามารถแปลก ๆ ที่อยากมีคืออะไร?" },
+        { category: "fun", text: "ถ้าได้ตั้งกฎหนึ่งข้อให้โลก จะตั้งว่าอะไร?" },
+        { category: "fun", text: "สัตว์ชนิดไหนเหมาะกับการเป็นเพื่อนร่วมบ้านที่สุด?" },
+        { category: "fun", text: "ถ้าได้ออกแบบวันหยุดในฝัน จะเป็นแบบไหน?" },
+        { category: "friendship", text: "อะไรทำให้รู้สึกว่าใครสักคนเป็นเพื่อนที่ดี?" },
+        { category: "friendship", text: "ความทรงจำกับเพื่อนที่ชอบที่สุดคืออะไร?" },
+        { category: "friendship", text: "อยากขอบคุณใครสักคนเรื่องอะไรไหม?" },
+        { category: "friendship", text: "กิจกรรมอะไรที่อยากลองทำกับเพื่อน?" },
+        { category: "friendship", text: "นิสัยแบบไหนที่ทำให้ไว้ใจคนคนหนึ่ง?" },
+        { category: "friendship", text: "เวลามีเรื่องไม่สบายใจ อยากให้เพื่อนช่วยแบบไหน?" },
+        { category: "friendship", text: "มิตรภาพที่ดีสำหรับคุณเป็นอย่างไร?" },
+        { category: "friendship", text: "อะไรคือสิ่งเล็ก ๆ ที่เพื่อนทำแล้วรู้สึกดี?" },
+        { category: "friendship", text: "มีคำแนะนำอะไรที่อยากบอกเพื่อนไหม?" },
+        { category: "friendship", text: "อยากไปเที่ยวกับเพื่อนที่ไหนมากที่สุด?" },
+        { category: "memory", text: "ความทรงจำในวัยเด็กที่ยังจำได้ดีคืออะไร?" },
+        { category: "memory", text: "วันไหนที่ทำให้รู้สึกภูมิใจในตัวเอง?" },
+        { category: "memory", text: "มีบทเรียนอะไรที่ได้จากความผิดพลาด?" },
+        { category: "memory", text: "ช่วงเวลาไหนที่อยากกลับไปสัมผัสอีกครั้ง?" },
+        { category: "memory", text: "คำพูดไหนที่มีความหมายกับคุณมาก?" },
+        { category: "memory", text: "มีเรื่องอะไรที่เคยกลัวแต่ตอนนี้ทำได้แล้ว?" },
+        { category: "memory", text: "ความสำเร็จเล็ก ๆ ที่อยากฉลองคืออะไร?" },
+        { category: "memory", text: "เหตุการณ์ไหนทำให้มองโลกต่างไปจากเดิม?" },
+        { category: "memory", text: "สิ่งที่อยากบอกตัวเองเมื่อปีที่แล้วคืออะไร?" },
+        { category: "memory", text: "มีสถานที่ไหนที่มีความทรงจำพิเศษไหม?" },
+        { category: "interest", text: "เพลงที่ฟังบ่อยที่สุดช่วงนี้คือเพลงอะไร?" },
+        { category: "interest", text: "หนังหรือซีรีส์เรื่องไหนที่อยากแนะนำ?" },
+        { category: "interest", text: "งานอดิเรกอะไรที่อยากเริ่มลอง?" },
+        { category: "interest", text: "ถ้าเลือกไปเที่ยวได้หนึ่งที่ อยากไปที่ไหน?" },
+        { category: "interest", text: "อาหารจานโปรดที่กินได้บ่อย ๆ คืออะไร?" },
+        { category: "interest", text: "แอปไหนที่เปิดใช้บ่อยที่สุด?" },
+        { category: "interest", text: "ทักษะอะไรที่อยากฝึกให้เก่งขึ้น?" },
+        { category: "interest", text: "ชอบช่วงเช้าหรือช่วงกลางคืนมากกว่ากัน?" },
+        { category: "interest", text: "หนังสือหรือบทความอะไรที่เคยประทับใจ?" },
+        { category: "interest", text: "สีไหนที่ทำให้รู้สึกสบายใจ?" },
+        { category: "general", text: "ช่วงนี้มีอะไรที่ทำให้ยิ้มได้บ้าง?" },
+        { category: "general", text: "เรื่องเล็ก ๆ ที่ทำให้มีความสุขคืออะไร?" },
+        { category: "general", text: "มีอะไรที่อยากลองทำสักครั้งไหม?" },
+        { category: "general", text: "ถ้าได้เรียนรู้อะไรใหม่ทันที จะเลือกอะไร?" },
+        { category: "general", text: "ตอนนี้กำลังตั้งเป้าหมายอะไรให้ตัวเอง?" },
+        { category: "general", text: "อะไรช่วยให้คุณผ่อนคลายในวันที่เหนื่อย?" },
+        { category: "general", text: "มีเรื่องอะไรที่อยากเล่าให้ใครสักคนฟังไหม?" },
+        { category: "general", text: "อะไรคือสิ่งที่คุณให้ความสำคัญมากที่สุด?" },
+        { category: "general", text: "มีอะไรที่อยากให้คนอื่นเข้าใจเกี่ยวกับคุณ?" },
+        { category: "general", text: "ถ้าส่งข้อความถึงตัวเองในอนาคตได้ จะเขียนว่าอะไร?" },
+        { category: "general", text: "ช่วงนี้อยากพัฒนาตัวเองเรื่องไหน?" },
+        { category: "general", text: "ถ้ามีเวลาว่างเพิ่มหนึ่งชั่วโมง จะใช้ทำอะไร?" },
+        { category: "general", text: "อะไรคือคำแนะนำที่อยากส่งต่อให้คนอื่น?" },
+        { category: "general", text: "มีเรื่องอะไรที่กำลังรอคอยอยู่ไหม?" },
+        { category: "general", text: "วันนี้มีอะไรที่อยากขอบคุณตัวเองไหม?" }
+      ]
+    };
+
+    const callableCache = new Map();
+
+    function callable(name) {
+      if (!callableCache.has(name)) {
+        callableCache.set(name, httpsCallable(functions, name));
+      }
+      return callableCache.get(name);
+    }
+
+    function showToast(message, type = "info", duration = 3500) {
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.setAttribute("role", "status");
+      const title = document.createElement("strong");
+      title.textContent =
+        type === "error" ? "เกิดข้อผิดพลาด" :
+        type === "success" ? "สำเร็จ" : "แจ้งเตือน";
+      const body = document.createElement("div");
+      body.textContent = String(message || "ดำเนินการแล้ว");
+      body.style.marginTop = "3px";
+      toast.append(title, body);
+      $("toastArea").appendChild(toast);
+      window.setTimeout(() => toast.remove(), duration);
+    }
+
+    function setStatus(element, message, type = "info") {
+      if (!element) return;
+      element.textContent = message || "";
+      element.classList.remove("hidden", "error", "success");
+      if (!message) {
+        element.classList.add("hidden");
+        return;
+      }
+      if (type === "error") element.classList.add("error");
+      if (type === "success") element.classList.add("success");
+    }
+
+    function setBusy(button, busy, busyText = "กำลังดำเนินการ...") {
+      if (!button) return;
+      if (busy) {
+        if (!button.dataset.originalText) {
+          button.dataset.originalText = button.textContent;
+        }
+        button.disabled = true;
+        button.textContent = busyText;
+      } else {
+        button.disabled = false;
+        if (button.dataset.originalText) {
+          button.textContent = button.dataset.originalText;
+          delete button.dataset.originalText;
+        }
+      }
+    }
+
+    function showError(error) {
+      const code = error?.code || "";
+      const messages = {
+        "auth/email-already-in-use": "อีเมลนี้มีบัญชีอยู่แล้ว",
+        "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
+        "auth/invalid-credential": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+        "auth/user-disabled": "บัญชีนี้ถูกระงับการใช้งาน",
+        "auth/weak-password": "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร",
+        "auth/too-many-requests": "มีการลองหลายครั้งเกินไป กรุณารอสักครู่",
+        "auth/network-request-failed": "ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้",
+        "permission-denied": "ไม่มีสิทธิ์ดำเนินการนี้",
+        "functions/permission-denied": "ไม่มีสิทธิ์ดำเนินการนี้",
+        "functions/unauthenticated": "กรุณาเข้าสู่ระบบใหม่",
+        "functions/resource-exhausted": "ใช้งานถี่เกินไป กรุณาลองใหม่ภายหลัง",
+        "functions/failed-precondition": "ระบบยังตั้งค่าไม่ครบหรือไม่สามารถดำเนินการได้",
+        "functions/not-found": "ไม่พบข้อมูลที่ต้องการ",
+        "functions/unavailable": "บริการไม่พร้อมใช้งานชั่วคราว",
+        "storage/unauthorized": "ไม่มีสิทธิ์จัดการไฟล์นี้",
+        "storage/canceled": "ยกเลิกการอัปโหลดแล้ว",
+        "storage/unknown": "อัปโหลดไฟล์ไม่สำเร็จ"
+      };
+      const message = messages[code] ||
+        error?.message?.includes("NOT_FOUND") ?
+        (messages[code] || "ไม่พบฟังก์ชัน Backend ที่จำเป็น กรุณาตรวจสอบการ Deploy") :
+        (messages[code] || "ดำเนินการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      showToast(message, "error", 5000);
+      console.error("Whispr operation error:", code || "unknown");
+      return message;
+    }
+
+    function showModal(title, bodyNodeOrText, actions = []) {
+      $("modalTitle").textContent = title;
+      $("modalBody").replaceChildren();
+      if (bodyNodeOrText instanceof Node) {
+        $("modalBody").appendChild(bodyNodeOrText);
+      } else {
+        const p = document.createElement("p");
+        p.textContent = String(bodyNodeOrText ?? "");
+        $("modalBody").appendChild(p);
+      }
+      $("modalActions").replaceChildren();
+      for (const action of actions) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = action.className || "btn";
+        button.textContent = action.label;
+        button.addEventListener("click", async () => {
+          if (action.close !== false) closeModal();
+          await action.onClick?.();
+        });
+        $("modalActions").appendChild(button);
+      }
+      $("modalBackdrop").classList.remove("hidden");
+      $("modalCloseButton").focus();
+    }
+
+    function closeModal() {
+      $("modalBackdrop").classList.add("hidden");
+      $("modalBody").replaceChildren();
+      $("modalActions").replaceChildren();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function safeText(value, maxLength = 2000) {
+      return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, maxLength);
+    }
+
+    function formatDate(value) {
+      let date = null;
+      if (value?.toDate) date = value.toDate();
+      else if (value instanceof Date) date = value;
+      else if (typeof value === "number") date = new Date(value);
+      else if (typeof value === "string") date = new Date(value);
+      if (!date || Number.isNaN(date.getTime())) return "ไม่ทราบเวลา";
+      return new Intl.DateTimeFormat("th-TH", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(date);
+    }
+
+    function relativeTime(value) {
+      let date = null;
+      if (value?.toDate) date = value.toDate();
+      else if (value instanceof Date) date = value;
+      else if (typeof value === "number") date = new Date(value);
+      else if (typeof value === "string") date = new Date(value);
+      if (!date || Number.isNaN(date.getTime())) return "เวลาโดยประมาณ";
+      const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+      if (seconds < 60) return "เมื่อสักครู่";
+      if (seconds < 3600) return `เมื่อ ${Math.floor(seconds / 60)} นาทีที่แล้ว`;
+      if (seconds < 86400) return `เมื่อ ${Math.floor(seconds / 3600)} ชั่วโมงที่แล้ว`;
+      return `เมื่อ ${Math.floor(seconds / 86400)} วันที่แล้ว`;
+    }
+
+    function getErrorText(error) {
+      return error?.message || "ไม่สามารถดำเนินการได้";
+    }
+
+    function randomId(length = 24) {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function getSenderToken() {
+      const key = "whispr_sender_token_v1";
+      let token = "";
+      try {
+        token = localStorage.getItem(key) || "";
+        if (!/^[a-f0-9]{32,128}$/.test(token)) {
+          token = randomId(32);
+          localStorage.setItem(key, token);
+        }
+      } catch {
+        token = randomId(32);
+      }
+      return token;
+    }
+
+    function getApproximateClientHint() {
+      const ua = navigator.userAgent || "";
+      let device = "อุปกรณ์ที่ไม่สามารถระบุได้";
+      let browser = "เบราว์เซอร์ที่ไม่สามารถระบุได้";
+
+      if (/Android/i.test(ua)) device = "อุปกรณ์ Android";
+      else if (/iPhone|iPad|iPod/i.test(ua)) device = "อุปกรณ์ iOS";
+      else if (/Windows/i.test(ua)) device = "อุปกรณ์ Windows";
+      else if (/Macintosh|Mac OS/i.test(ua)) device = "อุปกรณ์ macOS";
+      else if (/Linux/i.test(ua)) device = "อุปกรณ์ Linux";
+
+      if (/Edg\//i.test(ua)) browser = "Microsoft Edge";
+      else if (/Firefox\//i.test(ua)) browser = "Firefox";
+      else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) browser = "Chrome";
+      else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) browser = "Safari";
+
+      return { device, browser, accuracy: "approximate" };
+    }
+
+    function validateImage(file) {
+      if (!file) return "กรุณาเลือกไฟล์";
+      const allowed = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowed.includes(file.type)) return "รองรับเฉพาะ JPG, PNG และ WebP";
+      if (file.size > MAX_IMAGE_BYTES) return "รูปภาพต้องมีขนาดไม่เกิน 5 MB";
+      return "";
+    }
+
+    function validateAudio(file) {
+      if (!file) return "กรุณาเลือกไฟล์เสียง";
+      const allowed = [
+        "audio/webm", "audio/ogg", "audio/mp4",
+        "audio/mpeg", "audio/wav", "audio/x-wav",
+        "audio/webm;codecs=opus", "audio/ogg;codecs=opus"
+      ];
+      if (!allowed.includes(file.type) && !file.type.startsWith("audio/")) {
+        return "ไฟล์ที่เลือกไม่ใช่ไฟล์เสียง";
+      }
+      if (file.size > MAX_AUDIO_BYTES) return "ไฟล์เสียงต้องมีขนาดไม่เกิน 8 MB";
+      return "";
+    }
+
+    function validateUsername(username) {
+      return /^[A-Za-z0-9_]{3,24}$/.test(username);
+    }
+
+    function setConnectionState(text, type = "info") {
+      const el = $("connectionState");
+      el.textContent = text;
+      el.className = "badge";
+      if (type === "success") el.classList.add("badge-success");
+      if (type === "error") el.classList.add("badge-danger");
+    }
+
+    function setTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      document.documentElement.dataset.theme = normalized;
+      try {
+        localStorage.setItem("whispr_theme", normalized);
+      } catch {}
+      $("themeToggle").textContent = normalized === "dark" ? "Light Mode" : "Dark Mode";
+    }
+
+    function renderAvatar(img, url) {
+      img.src = url || DEFAULT_AVATAR;
+      img.onerror = () => {
+        img.onerror = null;
+        img.src = DEFAULT_AVATAR;
+      };
+    }
+
+    function setVisible(id, visible) {
+      $(id).classList.toggle("hidden", !visible);
+    }
+
+    function openAuth(mode = "login") {
+      state.authMode = mode;
+      $("authHeading").textContent = mode === "register" ? "สร้างบัญชี Whispr" : "เข้าสู่ระบบ";
+      $("authSubmitButton").textContent = mode === "register" ? "สร้างบัญชี" : "เข้าสู่ระบบ";
+      $("switchAuthMode").textContent = mode === "register" ? "มีบัญชีแล้ว? เข้าสู่ระบบ" : "ยังไม่มีบัญชี? สมัครสมาชิก";
+      setVisible("registerUsernameField", mode === "register");
+      setVisible("registerDisplayNameField", mode === "register");
+      setVisible("resetPasswordButton", mode === "login");
+      setVisible("authView", true);
+      setVisible("publicProfileView", false);
+      setVisible("dashboardView", false);
+      setVisible("signedOutLanding", false);
+      setStatus($("authStatus"), "");
+      $("authView").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function navigate(view) {
+      if (!state.user) {
+        openAuth("login");
+        return;
+      }
+      state.activeView = view;
+      document.querySelectorAll(".view-section").forEach((section) => {
+        section.classList.toggle("hidden", section.id !== `view-${view}`);
+      });
+      document.querySelectorAll(".nav-btn[data-view]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === view);
+      });
+      if (view === "inbox") loadInbox(true);
+      if (view === "wall") loadMyWall();
+      if (view === "analytics") loadAnalytics();
+      if (view === "settings") loadSettings();
+      if (view === "account") loadAccountView();
+    }
+
+    const navigationItems = [
+      { view: "overview", label: "ภาพรวม", icon: "⌂" },
+      { view: "inbox", label: "กล่องข้อความ", icon: "✉" },
+      { view: "wall", label: "Public Wall", icon: "▤" },
+      { view: "analytics", label: "สถิติ", icon: "▥" },
+      { view: "settings", label: "ตั้งค่า", icon: "⚙" },
+      { view: "account", label: "บัญชี", icon: "○" }
+    ];
+
+    function renderNavigation() {
+      for (const targetId of ["sidebarNavigation", "mobileNavigation"]) {
+        const nav = $(targetId);
+        nav.replaceChildren();
+        for (const item of navigationItems) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "nav-btn";
+          button.dataset.view = item.view;
+          const icon = document.createElement("span");
+          icon.setAttribute("aria-hidden", "true");
+          icon.textContent = item.icon;
+          const label = document.createElement("span");
+          label.textContent = item.label;
+          button.append(icon, label);
+          button.addEventListener("click", () => navigate(item.view));
+          nav.appendChild(button);
+        }
+      }
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("คัดลอกแล้ว", "success");
+      } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand("copy");
+        textarea.remove();
+        if (copied) showToast("คัดลอกแล้ว", "success");
+        else showToast("คัดลอกไม่สำเร็จ กรุณาคัดลอกด้วยตนเอง", "error");
+      }
+    }
+
+    function profileLink(username) {
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = "";
+      url.searchParams.set("u", username);
+      return url.toString();
+    }
+
+    async function loadPublicProfile(username) {
+      const normalized = String(username || "").trim().toLowerCase();
+      if (!/^[a-z0-9_]{3,24}$/.test(normalized)) {
+        showToast("Username ไม่ถูกต้อง", "error");
+        return;
+      }
+
+      try {
+        setConnectionState("กำลังโหลดโปรไฟล์");
+        const usernameSnap = await getDoc(doc(db, "usernames", normalized));
+        if (!usernameSnap.exists()) {
+          showToast("ไม่พบโปรไฟล์นี้", "error");
+          return;
+        }
+
+        const usernameData = usernameSnap.data();
+        const uid = usernameData.uid;
+        if (!uid) throw new Error("ไม่พบข้อมูลเจ้าของโปรไฟล์");
+
+        const userSnap = await getDoc(doc(db, "users", uid));
+        if (!userSnap.exists()) {
+          showToast("ไม่พบโปรไฟล์นี้", "error");
+          return;
+        }
+
+        const profile = userSnap.data();
+        if (profile.profileVisibility === false || profile.accountStatus === "suspended" ||
+            profile.accountStatus === "deleted") {
+          showToast("โปรไฟล์นี้ไม่พร้อมใช้งาน", "error");
+          return;
+        }
+
+        state.publicUid = uid;
+        state.publicProfile = profile;
+
+        $("publicDisplayName").textContent = profile.displayName || normalized;
+        $("publicUsername").textContent = `@${profile.username || normalized}`;
+        $("publicBio").textContent = profile.bio || "";
+        renderAvatar($("publicAvatar"), profile.photoURL || "");
+        setVisible("publicClosedNotice", profile.acceptsMessages === false);
+        setVisible("anonymousMessageForm", profile.acceptsMessages !== false);
+        setVisible("publicProfileView", true);
+        setVisible("heroSection", false);
+        setVisible("authView", false);
+        setVisible("dashboardView", false);
+        setVisible("signedOutLanding", false);
+        setConnectionState("พร้อมใช้งาน", "success");
+
+        await loadPublicWall(uid, profile);
+      } catch (error) {
+        showError(error);
+        setConnectionState("เชื่อมต่อไม่สำเร็จ", "error");
+      }
+    }
+
+    async function loadPublicWall(uid, profile) {
+      const enabled = profile.publicWallEnabled === true;
+      setVisible("publicWallSection", enabled);
+      if (!enabled) return;
+
+      const list = $("publicWallList");
+      list.replaceChildren();
+      try {
+        const wallQuery = query(
+          collection(db, "publicWall"),
+          where("ownerUid", "==", uid),
+          where("status", "==", "published"),
+          orderBy("publishedAt", "desc"),
+          limit(20)
+        );
+        const snap = await getDocs(wallQuery);
+        if (snap.empty) {
+          list.appendChild(makeEmpty("ยังไม่มีข้อความที่เผยแพร่"));
+          return;
+        }
+        for (const item of snap.docs) {
+          const data = item.data();
+          list.appendChild(renderPublicWallItem(item.id, data, true));
+        }
+      } catch (error) {
+        list.appendChild(makeEmpty("ไม่สามารถโหลด Public Wall ได้"));
+        showError(error);
+      }
+    }
+
+    function makeEmpty(text) {
+      const el = document.createElement("div");
+      el.className = "empty";
+      el.textContent = text;
+      return el;
+    }
+
+    function renderPublicWallItem(id, data, publicMode = false) {
+      const card = document.createElement("article");
+      card.className = "wall-item";
+
+      const text = document.createElement("div");
+      text.className = "wall-text";
+      text.textContent = data.text || data.messageText || "";
+      card.appendChild(text);
+
+      if (data.replyText) {
+        const reply = document.createElement("div");
+        reply.style.marginTop = "12px";
+        reply.style.paddingTop = "12px";
+        reply.style.borderTop = "1px solid var(--line)";
+        const label = document.createElement("strong");
+        label.textContent = "คำตอบ";
+        const content = document.createElement("p");
+        content.textContent = data.replyText;
+        reply.append(label, content);
+        card.appendChild(reply);
+      }
+
+      const meta = document.createElement("div");
+      meta.className = "muted small";
+      meta.style.marginTop = "12px";
+      meta.textContent = formatDate(data.publishedAt || data.createdAt);
+      card.appendChild(meta);
+
+      const actions = document.createElement("div");
+      actions.className = "row";
+      actions.style.marginTop = "12px";
+
+      const reaction = document.createElement("button");
+      reaction.type = "button";
+      reaction.className = "btn btn-small";
+      reaction.textContent = `หัวใจ ${Number(data.reactionCount || 0)}`;
+      reaction.disabled = !publicMode;
+      if (publicMode) {
+        reaction.addEventListener("click", async () => {
+          reaction.disabled = true;
+          try {
+            const result = await callable("toggleReaction")({
+              wallId: id,
+              reaction: "heart",
+              visitorToken: getVisitorToken()
             });
-        };
+            reaction.textContent = `หัวใจ ${Number(result.data?.reactionCount ?? data.reactionCount ?? 0)}`;
+            showToast("บันทึก Reaction แล้ว", "success");
+          } catch (error) {
+            showError(error);
+          } finally {
+            reaction.disabled = false;
+          }
+        });
+      }
+      actions.appendChild(reaction);
 
-        // Utility: Draw rounded rectangle on canvas
-        function roundRect(ctx, x, y, width, height, radius) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
+      if (!publicMode && state.user && data.ownerUid === state.user.uid) {
+        const hideButton = document.createElement("button");
+        hideButton.type = "button";
+        hideButton.className = "btn btn-small btn-danger";
+        hideButton.textContent = "ซ่อน";
+        hideButton.addEventListener("click", () => hideWallItem(id));
+        actions.appendChild(hideButton);
+      }
+
+      card.appendChild(actions);
+      return card;
+    }
+
+    function getVisitorToken() {
+      const key = "whispr_wall_visitor_v1";
+      try {
+        let token = localStorage.getItem(key);
+        if (!token || !/^[a-f0-9]{32,128}$/.test(token)) {
+          token = randomId(32);
+          localStorage.setItem(key, token);
+        }
+        return token;
+      } catch {
+        return randomId(32);
+      }
+    }
+
+    async function sendAnonymousMessage(event) {
+      event.preventDefault();
+      if (!state.publicUid || !state.publicProfile) {
+        showToast("ไม่พบผู้รับข้อความ", "error");
+        return;
+      }
+
+      const messageText = safeText($("anonymousText").value, MAX_MESSAGE_LENGTH);
+      const imageFile = state.pendingImageFile;
+      const audioFile = state.pendingAudioFile;
+      if (!messageText && !imageFile && !audioFile) {
+        setStatus($("anonymousSendStatus"), "กรุณาเขียนข้อความหรือแนบไฟล์", "error");
+        return;
+      }
+
+      if (state.publicProfile.acceptsMessages === false) {
+        setStatus($("anonymousSendStatus"), "ผู้ใช้ปิดรับข้อความแล้ว", "error");
+        return;
+      }
+
+      if (imageFile) {
+        const error = validateImage(imageFile);
+        if (error) {
+          setStatus($("anonymousSendStatus"), error, "error");
+          return;
+        }
+      }
+
+      if (audioFile) {
+        const error = validateAudio(audioFile);
+        if (error) {
+          setStatus($("anonymousSendStatus"), error, "error");
+          return;
+        }
+      }
+
+      const button = $("sendAnonymousButton");
+      setBusy(button, true, "กำลังส่งข้อความ...");
+      setStatus($("anonymousSendStatus"), "กำลังตรวจสอบข้อมูลและส่งข้อความ");
+
+      try {
+        const attachments = [];
+        if (imageFile) {
+          const imageUpload = await uploadAnonymousAttachment(imageFile, "image");
+          attachments.push(imageUpload);
+        }
+        if (audioFile) {
+          const audioUpload = await uploadAnonymousAttachment(audioFile, "audio");
+          attachments.push(audioUpload);
         }
 
-        // Utility: Escape HTML to prevent XSS
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag])
-            );
+        const result = await callable("sendAnonymousMessage")({
+          recipientUid: state.publicUid,
+          text: messageText,
+          senderToken: getSenderToken(),
+          clientHint: getApproximateClientHint(),
+          attachments,
+          clientRequestId: randomId(16),
+          language: document.documentElement.lang || "th"
+        });
+
+        $("anonymousText").value = "";
+        $("messageCounter").textContent = "0 / 2000";
+        clearAnonymousAttachments();
+        setStatus($("anonymousSendStatus"), "ส่งข้อความเรียบร้อยแล้ว", "success");
+        showToast("ส่งข้อความเรียบร้อยแล้ว", "success");
+      } catch (error) {
+        setStatus($("anonymousSendStatus"), showError(error), "error");
+      } finally {
+        setBusy(button, false);
+      }
+    }
+
+    async function uploadAnonymousAttachment(file, kind) {
+      /*
+        Cloud Function createAnonymousUpload ต้องตรวจ MIME, ขนาดไฟล์,
+        recipientUid, senderToken และ Rate Limit ก่อนคืนค่า uploadUrl,
+        storagePath และ uploadToken ที่หมดอายุได้
+        URL ที่คืนมาต้องเป็น Signed Upload URL ที่ Backend สร้างขึ้น
+        ห้ามนำ API Secret มาไว้ใน Frontend
+      */
+      const response = await callable("createAnonymousUpload")({
+        recipientUid: state.publicUid,
+        senderToken: getSenderToken(),
+        fileName: file.name,
+        contentType: file.type,
+        size: file.size,
+        kind
+      });
+
+      const data = response.data || {};
+      if (!data.uploadUrl || !data.storagePath || !data.uploadToken) {
+        throw new Error("ระบบอัปโหลดไม่พร้อมใช้งาน กรุณาตรวจสอบ Cloud Function");
+      }
+
+      const uploadResponse = await fetch(data.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+          "X-Upload-Token": data.uploadToken
+        },
+        body: file
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("อัปโหลดไฟล์ไม่สำเร็จ");
+      }
+
+      return {
+        kind,
+        storagePath: data.storagePath,
+        contentType: file.type,
+        size: file.size,
+        originalName: file.name.slice(0, 120)
+      };
+    }
+
+    function clearAnonymousAttachments() {
+      state.pendingImageFile = null;
+      state.pendingAudioFile = null;
+      $("anonymousImage").value = "";
+      $("anonymousAudio").value = "";
+      $("anonymousImagePreview").replaceChildren();
+      $("anonymousAudioPreview").replaceChildren();
+    }
+
+    function previewSelectedFile(file, target, kind) {
+      target.replaceChildren();
+      if (!file) return;
+      const error = kind === "image" ? validateImage(file) : validateAudio(file);
+      if (error) {
+        showToast(error, "error");
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const element = document.createElement(kind === "image" ? "img" : "audio");
+      element.src = url;
+      if (kind === "audio") element.controls = true;
+      else element.alt = "ตัวอย่างรูปที่จะแนบ";
+      element.onload = element.onerror = () => {
+        if (kind === "image") URL.revokeObjectURL(url);
+      };
+      target.appendChild(element);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "btn btn-small btn-danger";
+      remove.textContent = "นำไฟล์ออก";
+      remove.style.marginTop = "8px";
+      remove.addEventListener("click", () => {
+        target.replaceChildren();
+        if (kind === "image") {
+          state.pendingImageFile = null;
+          $("anonymousImage").value = "";
+        } else {
+          state.pendingAudioFile = null;
+          $("anonymousAudio").value = "";
+        }
+        URL.revokeObjectURL(url);
+      });
+      target.appendChild(remove);
+    }
+
+    function pickRandomQuestion() {
+      const category = $("questionCategory").value;
+      let pool = state.questions.filter((question) =>
+        category === "all" || question.category === category
+      );
+
+      let available = pool.filter((question) => !state.questionUsed.has(question.text));
+      if (!available.length) {
+        for (const question of pool) state.questionUsed.delete(question.text);
+        available = pool;
+      }
+
+      if (!available.length) return;
+      const selected = available[Math.floor(Math.random() * available.length)];
+      state.questionUsed.add(selected.text);
+      $("anonymousText").value = selected.text;
+      $("messageCounter").textContent = `${selected.text.length} / ${MAX_MESSAGE_LENGTH}`;
+      $("anonymousText").focus();
+    }
+
+    async function handleAuthSubmit(event) {
+      event.preventDefault();
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      const button = $("authSubmitButton");
+      setBusy(button, true, "กำลังดำเนินการ...");
+      setStatus($("authStatus"), "");
+
+      try {
+        if (state.authMode === "register") {
+          const username = $("registerUsername").value.trim();
+          const displayName = safeText($("registerDisplayName").value, 60);
+          if (!validateUsername(username)) {
+            throw new Error("Username ต้องเป็นภาษาอังกฤษ ตัวเลข หรือ _ ความยาว 3–24 ตัว");
+          }
+          if (!displayName) throw new Error("กรุณาระบุชื่อที่แสดง");
+
+          const credential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(credential.user, { displayName });
+
+          try {
+            await sendEmailVerification(credential.user);
+            await callable("reserveUsername")({
+              username,
+              displayName,
+              photoURL: "",
+              bio: "",
+              theme: "light"
+            });
+            showToast("สร้างบัญชีแล้ว กรุณายืนยันอีเมล", "success", 5000);
+          } catch (setupError) {
+            showError(setupError);
+            throw new Error("สร้างบัญชีแล้ว แต่ตั้งค่าโปรไฟล์ไม่สำเร็จ กรุณาเข้าสู่ระบบและติดต่อผู้ดูแล");
+          }
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+          showToast("เข้าสู่ระบบสำเร็จ", "success");
+        }
+      } catch (error) {
+        setStatus($("authStatus"), showError(error), "error");
+      } finally {
+        setBusy(button, false);
+      }
+    }
+
+    async function resetPassword() {
+      const email = $("authEmail").value.trim();
+      if (!email) {
+        setStatus($("authStatus"), "กรุณากรอกอีเมลก่อนขอรีเซ็ตรหัสผ่าน", "error");
+        return;
+      }
+      const button = $("resetPasswordButton");
+      setBusy(button, true, "กำลังส่ง...");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        setStatus($("authStatus"), "หากอีเมลนี้มีบัญชี ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านให้", "success");
+      } catch (error) {
+        setStatus($("authStatus"), showError(error), "error");
+      } finally {
+        setBusy(button, false);
+      }
+    }
+
+    async function loadCurrentUserProfile(user) {
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (!userSnap.exists()) {
+        throw new Error("ไม่พบเอกสารโปรไฟล์ของบัญชีนี้ กรุณาตรวจสอบขั้นตอน reserveUsername");
+      }
+      state.userDoc = userSnap.data();
+      state.profilePhotoURL = state.userDoc.photoURL || "";
+      renderAvatar($("dashboardAvatar"), state.profilePhotoURL);
+      $("dashboardName").textContent = state.userDoc.displayName || user.displayName || "ผู้ใช้";
+      $("dashboardHandle").textContent = `@${state.userDoc.username || ""}`;
+      $("shareLink").value = profileLink(state.userDoc.username || "");
+      $("accountEmail").textContent = user.email || "ไม่พบอีเมล";
+      $("accountVerificationStatus").textContent = user.emailVerified
+        ? "ยืนยันอีเมลแล้ว"
+        : "ยังไม่ได้ยืนยันอีเมล";
+      $("accountSecurityInfo").textContent = user.emailVerified
+        ? "บัญชีได้รับการยืนยันอีเมลแล้ว"
+        : "กรุณายืนยันอีเมลเพื่อเพิ่มความน่าเชื่อถือของบัญชี";
+    }
+
+    async function loadDashboardOverview() {
+      if (!state.user) return;
+      try {
+        const q = query(
+          collection(db, "messages"),
+          where("recipientUid", "==", state.user.uid),
+          orderBy("createdAt", "desc"),
+          limit(5)
+        );
+        const snap = await getDocs(q);
+        const list = $("recentMessages");
+        list.replaceChildren();
+        if (snap.empty) {
+          list.appendChild(makeEmpty("ยังไม่มีข้อความ ลองแชร์ลิงก์ของคุณให้เพื่อน"));
+        } else {
+          for (const messageDoc of snap.docs) {
+            list.appendChild(renderMessageCard(messageDoc.id, messageDoc.data(), true));
+          }
         }
 
-        // Initialize App View
-        lucide.createIcons();
-        handleRoute();
+        const totalQ = query(
+          collection(db, "messages"),
+          where("recipientUid", "==", state.user.uid),
+          limit(100)
+        );
+        const totalSnap = await getDocs(totalQ);
+        let unread = 0;
+        for (const docSnap of totalSnap.docs) {
+          if (docSnap.data().readAt == null && docSnap.data().status !== "archived") unread++;
+        }
+        $("statTotal").textContent = totalSnap.size >= 100 ? "100+" : String(totalSnap.size);
+        $("statUnread").textContent = String(unread);
+        $("statWall").textContent = String(state.wallItems.length);
+      } catch (error) {
+        showError(error);
+      }
+    }
 
-    </script>
+    function hintText(data) {
+      if (state.userDoc?.preferences?.showHints === false) return "";
+      const hint = data.clientHint || {};
+      const parts = [];
+      if (hint.device) parts.push(hint.device);
+      if (hint.browser) parts.push(`ใช้ ${hint.browser}`);
+      if (data.createdAt) parts.push(relativeTime(data.createdAt));
+      if (!parts.length) return "ไม่มีคำใบ้เพิ่มเติม";
+      return `${parts.join(" · ")} · ข้อมูลโดยประมาณ`;
+    }
+
+    function createActionButton(label, className, handler) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = className || "btn btn-small";
+      button.textContent = label;
+      button.addEventListener("click", handler);
+      return button;
+    }
+
+    function renderMessageCard(id, data, compact = false) {
+      const card = document.createElement("article");
+      card.className = `message-card ${data.readAt ? "" : "is-new"}`;
+      card.dataset.messageId = id;
+
+      const top = document.createElement("div");
+      top.className = "between";
+
+      const meta = document.createElement("div");
+      const time = document.createElement("div");
+      time.className = "muted small";
+      time.textContent = formatDate(data.createdAt);
+      const status = document.createElement("span");
+      status.className = "badge";
+      status.textContent = data.readAt ? "อ่านแล้ว" : "ใหม่";
+      meta.append(time, status);
+
+      const pin = document.createElement("span");
+      pin.className = "badge";
+      pin.textContent = data.pinned ? "ปักหมุด" : "";
+      top.append(meta, pin);
+      card.appendChild(top);
+
+      const body = document.createElement("div");
+      body.className = "message-body";
+      body.textContent = data.text || "ข้อความนี้ไม่มีข้อความตัวอักษร";
+      card.appendChild(body);
+
+      const hint = document.createElement("div");
+      hint.className = "muted small";
+      hint.textContent = hintText(data);
+      card.appendChild(hint);
+
+      if (Array.isArray(data.attachments) && data.attachments.length) {
+        for (const attachment of data.attachments) {
+          if (attachment.kind === "image" && attachment.downloadURL) {
+            card.appendChild(renderRevealImage(attachment.downloadURL, attachment.contentType));
+          } else if (attachment.kind === "audio" && attachment.downloadURL) {
+            const wrap = document.createElement("div");
+            wrap.className = "attachment";
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.preload = "none";
+            audio.src = attachment.downloadURL;
+            audio.setAttribute("aria-label", "ข้อความเสียง");
+            wrap.appendChild(audio);
+            card.appendChild(wrap);
+          }
+        }
+      }
+
+      if (data.replyText) {
+        const reply = document.createElement("div");
+        reply.className = "notice";
+        reply.style.marginTop = "12px";
+        const label = document.createElement("strong");
+        label.textContent = "คำตอบของคุณ";
+        const content = document.createElement("p");
+        content.textContent = data.replyText;
+        reply.append(label, content);
+        card.appendChild(reply);
+      }
+
+      if (!compact) {
+        const actions = document.createElement("div");
+        actions.className = "message-actions";
+
+        if (!data.readAt) {
+          actions.appendChild(createActionButton("ทำเครื่องหมายว่าอ่านแล้ว", "btn btn-small", () => markMessageRead(id)));
+        }
+
+        actions.appendChild(createActionButton(data.pinned ? "เลิกปักหมุด" : "ปักหมุด", "btn btn-small", () => togglePinMessage(id, !data.pinned)));
+        actions.appendChild(createActionButton(data.status === "archived" ? "นำออกจาก Archive" : "Archive", "btn btn-small", () => toggleArchiveMessage(id, data.status !== "archived")));
+        actions.appendChild(createActionButton("ตอบกลับ", "btn btn-small", () => openReplyModal(id, data)));
+        actions.appendChild(createActionButton("สร้างภาพ Story", "btn btn-small", () => openStoryModal(id, data)));
+        actions.appendChild(createActionButton("เผยแพร่บน Wall", "btn btn-small", () => openPublishModal(id, data)));
+        actions.appendChild(createActionButton("รายงาน", "btn btn-small", () => reportMessage(id, data)));
+        actions.appendChild(createActionButton("บล็อก Token", "btn btn-small", () => blockMessageSender(id, data)));
+        actions.appendChild(createActionButton("ลบ", "btn btn-small btn-danger", () => deleteMessage(id)));
+
+        card.appendChild(actions);
+      }
+
+      return card;
+    }
+
+    function renderRevealImage(url, alt = "ภาพแนบ") {
+      const wrap = document.createElement("div");
+      wrap.className = "attachment";
+      const reveal = document.createElement("button");
+      reveal.type = "button";
+      reveal.className = "reveal-wrap";
+      reveal.setAttribute("aria-label", "แตะค้างเพื่อดูภาพ ปล่อยเพื่อซ่อนภาพ");
+      reveal.setAttribute("aria-pressed", "false");
+
+      const image = document.createElement("img");
+      image.src = url;
+      image.alt = alt === "image/png" || alt === "image/jpeg" || alt === "image/webp"
+        ? "ภาพที่ได้รับ" : "ภาพแนบจากผู้ส่ง";
+      image.loading = "lazy";
+      image.draggable = false;
+
+      const overlay = document.createElement("span");
+      overlay.className = "reveal-overlay";
+      const eye = document.createElement("span");
+      eye.setAttribute("aria-hidden", "true");
+      eye.textContent = "◉";
+      eye.style.fontSize = "2rem";
+      const label = document.createElement("span");
+      label.textContent = "แตะค้างเพื่อดูภาพ";
+      overlay.append(eye, label);
+      reveal.append(image, overlay);
+
+      const start = (event) => {
+        if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+        reveal.classList.add("revealing");
+        reveal.setAttribute("aria-pressed", "true");
+      };
+      const end = () => {
+        reveal.classList.remove("revealing");
+        reveal.setAttribute("aria-pressed", "false");
+      };
+
+      reveal.addEventListener("pointerdown", start);
+      reveal.addEventListener("pointerup", end);
+      reveal.addEventListener("pointerleave", end);
+      reveal.addEventListener("pointercancel", end);
+      reveal.addEventListener("keydown", start);
+      reveal.addEventListener("keyup", end);
+      reveal.addEventListener("blur", end);
+
+      wrap.appendChild(reveal);
+      return wrap;
+    }
+
+    async function loadInbox(reset = false) {
+      if (!state.user) return;
+      const list = $("inboxList");
+      if (reset) {
+        state.messages = [];
+        state.lastMessageDoc = null;
+        state.hasMoreMessages = false;
+        list.replaceChildren();
+        list.appendChild(makeEmpty("กำลังโหลดข้อความ..."));
+      }
+
+      try {
+        let q = query(
+          collection(db, "messages"),
+          where("recipientUid", "==", state.user.uid),
+          orderBy("createdAt", "desc"),
+          limit(PAGE_SIZE)
+        );
+        if (!reset && state.lastMessageDoc) {
+          q = query(
+            collection(db, "messages"),
+            where("recipientUid", "==", state.user.uid),
+            orderBy("createdAt", "desc"),
+            startAfter(state.lastMessageDoc),
+            limit(PAGE_SIZE)
+          );
+        }
+
+        const snap = await getDocs(q);
+        if (reset) list.replaceChildren();
+        if (!snap.empty) {
+          state.lastMessageDoc = snap.docs[snap.docs.length - 1];
+          state.hasMoreMessages = snap.size === PAGE_SIZE;
+          for (const messageDoc of snap.docs) {
+            state.messages.push({
+              id: messageDoc.id,
+              data: messageDoc.data(),
+              snapshot: messageDoc
+            });
+          }
+        } else if (reset) {
+          list.appendChild(makeEmpty("ยังไม่มีข้อความในกล่องของคุณ"));
+        }
+
+        setVisible("loadMoreMessagesButton", state.hasMoreMessages);
+        applyInboxFilters();
+      } catch (error) {
+        list.replaceChildren(makeEmpty("โหลดข้อความไม่สำเร็จ กรุณาตรวจสอบการตั้งค่า Firestore"));
+        showError(error);
+      }
+    }
+
+    function applyInboxFilters() {
+      const search = safeText($("inboxSearch").value, 200).toLowerCase();
+      const status = $("inboxStatusFilter").value;
+      const from = $("inboxDateFrom").value ? new Date(`${$("inboxDateFrom").value}T00:00:00`) : null;
+      const to = $("inboxDateTo").value ? new Date(`${$("inboxDateTo").value}T23:59:59.999`) : null;
+
+      const filtered = state.messages.filter(({ data }) => {
+        const content = String(data.text || "").toLowerCase();
+        if (search && !content.includes(search)) return false;
+        if (status === "unread" && data.readAt) return false;
+        if (status === "read" && !data.readAt) return false;
+        if (status === "pinned" && !data.pinned) return false;
+        if (status === "archived" && data.status !== "archived") return false;
+        if (status !== "archived" && data.status === "archived") return false;
+
+        const created = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+        if (from && (!created || created < from)) return false;
+        if (to && (!created || created > to)) return false;
+        return true;
+      });
+
+      state.filteredMessages = filtered;
+      const list = $("inboxList");
+      list.replaceChildren();
+      if (!filtered.length) {
+        list.appendChild(makeEmpty("ไม่พบข้อความที่ตรงกับเงื่อนไข"));
+        return;
+      }
+      for (const item of filtered) list.appendChild(renderMessageCard(item.id, item.data, false));
+    }
+
+    async function updateMessage(id, changes) {
+      if (!state.user) return;
+      const messageRef = doc(db, "messages", id);
+      await updateDoc(messageRef, {
+        ...changes,
+        updatedAt: serverTimestamp()
+      });
+      const item = state.messages.find((message) => message.id === id);
+      if (item) item.data = { ...item.data, ...changes };
+      showToast("อัปเดตข้อความแล้ว", "success");
+      await loadInbox(true);
+    }
+
+    async function markMessageRead(id) {
+      try {
+        await updateMessage(id, { readAt: serverTimestamp() });
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function togglePinMessage(id, pinned) {
+      try {
+        await updateMessage(id, { pinned });
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function toggleArchiveMessage(id, archive) {
+      try {
+        await updateMessage(id, { status: archive ? "archived" : "received" });
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function deleteMessage(id) {
+      const message = state.messages.find((item) => item.id === id);
+      if (!message) return;
+      const body = document.createElement("p");
+      body.textContent = "ข้อความนี้จะถูกส่งคำขอลบไปยังระบบ การลบไฟล์แนบที่เกี่ยวข้องต้องดำเนินการผ่าน Backend";
+      showModal("ยืนยันการลบข้อความ", body, [
+        { label: "ยกเลิก", className: "btn", onClick: () => {} },
+        {
+          label: "ลบข้อความ",
+          className: "btn btn-danger",
+          onClick: async () => {
+            try {
+              await callable("deleteOwnMessage")({ messageId: id });
+              showToast("ส่งคำขอลบข้อความแล้ว", "success");
+              await loadInbox(true);
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    function openReplyModal(id, data) {
+      const wrap = document.createElement("div");
+      wrap.className = "stack";
+      const source = document.createElement("div");
+      source.className = "notice";
+      source.textContent = `ข้อความต้นฉบับ: ${data.text || "ข้อความแนบไฟล์"}`;
+      const label = document.createElement("label");
+      label.htmlFor = "replyTextInput";
+      label.textContent = "คำตอบของคุณ";
+      const textarea = document.createElement("textarea");
+      textarea.id = "replyTextInput";
+      textarea.className = "control";
+      textarea.maxLength = 2000;
+      textarea.rows = 5;
+      textarea.placeholder = "เขียนคำตอบ...";
+      textarea.value = data.replyText || "";
+      wrap.append(source, label, textarea);
+
+      showModal("ตอบกลับข้อความ", wrap, [
+        { label: "ยกเลิก", className: "btn", onClick: () => {} },
+        {
+          label: "บันทึกคำตอบ",
+          className: "btn btn-primary",
+          close: false,
+          onClick: async () => {
+            const text = safeText(textarea.value, 2000);
+            if (!text) {
+              showToast("กรุณาเขียนคำตอบก่อนบันทึก", "error");
+              return;
+            }
+            try {
+              await callable("submitReply")({
+                messageId: id,
+                text,
+                publish: false,
+                clientRequestId: randomId(16)
+              });
+              closeModal();
+              showToast("บันทึกคำตอบแล้ว", "success");
+              await loadInbox(true);
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    function openPublishModal(id, data) {
+      const wrap = document.createElement("div");
+      wrap.className = "stack";
+      const notice = document.createElement("div");
+      notice.className = "notice";
+      notice.textContent = "โปรดตรวจสอบก่อนเผยแพร่ ข้อความต้นฉบับจะไม่แสดงข้อมูลผู้ส่งหรือคำใบ้ส่วนตัว";
+      const preview = document.createElement("div");
+      preview.className = "wall-item";
+      preview.textContent = data.text || "ข้อความนี้ไม่มีข้อความตัวอักษร";
+      const checkLabel = document.createElement("label");
+      checkLabel.className = "checkline";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      const checkText = document.createElement("span");
+      checkText.textContent = "ฉันตรวจสอบ Preview แล้วและยืนยันการเผยแพร่";
+      checkLabel.append(checkbox, checkText);
+      wrap.append(notice, preview, checkLabel);
+
+      showModal("เผยแพร่ข้อความบน Public Wall", wrap, [
+        { label: "ยกเลิก", className: "btn", onClick: () => {} },
+        {
+          label: "เผยแพร่",
+          className: "btn btn-primary",
+          close: false,
+          onClick: async () => {
+            if (!checkbox.checked) {
+              showToast("กรุณายืนยันหลังตรวจสอบ Preview", "error");
+              return;
+            }
+            try {
+              await callable("publishWallMessage")({
+                messageId: id,
+                confirmed: true,
+                includeReply: false
+              });
+              closeModal();
+              showToast("เผยแพร่ข้อความแล้ว", "success");
+              await loadMyWall();
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    async function reportMessage(id, data) {
+      const wrap = document.createElement("div");
+      wrap.className = "stack";
+      const label = document.createElement("label");
+      label.htmlFor = "reportReason";
+      label.textContent = "เหตุผลในการรายงาน";
+      const select = document.createElement("select");
+      select.id = "reportReason";
+      select.className = "control";
+      for (const [value, text] of [
+        ["harassment", "คุกคามหรือกลั่นแกล้ง"],
+        ["threat", "ข่มขู่"],
+        ["personal_data", "เปิดเผยข้อมูลส่วนตัว"],
+        ["inappropriate", "เนื้อหาไม่เหมาะสม"],
+        ["spam", "สแปม"],
+        ["other", "อื่น ๆ"]
+      ]) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        select.appendChild(option);
+      }
+      const detail = document.createElement("textarea");
+      detail.className = "control";
+      detail.maxLength = 500;
+      detail.placeholder = "รายละเอียดเพิ่มเติม (ไม่บังคับ)";
+      wrap.append(label, select, detail);
+
+      showModal("รายงานข้อความ", wrap, [
+        { label: "ยกเลิก", className: "btn", onClick: () => {} },
+        {
+          label: "ส่งรายงาน",
+          className: "btn btn-primary",
+          close: false,
+          onClick: async () => {
+            try {
+              await callable("submitReport")({
+                targetType: "message",
+                targetId: id,
+                reason: select.value,
+                details: safeText(detail.value, 500)
+              });
+              closeModal();
+              showToast("ส่งรายงานให้ผู้ดูแลแล้ว", "success");
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    async function blockMessageSender(id, data) {
+      const senderToken = data.senderToken;
+      if (!senderToken) {
+        showToast("ข้อความนี้ไม่มี Sender Token ที่บล็อกได้", "error");
+        return;
+      }
+
+      const p = document.createElement("p");
+      p.textContent = "การบล็อกจะพยายามปฏิเสธข้อความใหม่จาก Token นี้ แต่ผู้ส่งอาจเปลี่ยนเบราว์เซอร์หรือล้างข้อมูลได้";
+      showModal("บล็อกแหล่งส่งข้อความ", p, [
+        { label: "ยกเลิก", className: "btn", onClick: () => {} },
+        {
+          label: "บล็อก",
+          className: "btn btn-danger",
+          onClick: async () => {
+            try {
+              await callable("blockSenderToken")({
+                messageId: id,
+                senderToken,
+                action: "block"
+              });
+              showToast("ส่งคำขอบล็อกแล้ว", "success");
+              await loadBlockedTokens();
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    async function loadMyWall() {
+      if (!state.user) return;
+      const list = $("myWallList");
+      list.replaceChildren();
+      try {
+        const q = query(
+          collection(db, "publicWall"),
+          where("ownerUid", "==", state.user.uid),
+          orderBy("publishedAt", "desc"),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+        state.wallItems = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+        $("wallEnabledToggle").checked = state.userDoc?.publicWallEnabled === true;
+        if (snap.empty) {
+          list.appendChild(makeEmpty("ยังไม่มีข้อความบน Public Wall"));
+        } else {
+          for (const item of state.wallItems) {
+            const card = renderPublicWallItem(item.id, item.data, false);
+            if (item.data.status !== "published") {
+              const badge = document.createElement("span");
+              badge.className = "badge";
+              badge.textContent = "ซ่อนอยู่";
+              card.appendChild(badge);
+            }
+            list.appendChild(card);
+          }
+        }
+        $("statWall").textContent = String(state.wallItems.filter((item) => item.data.status === "published").length);
+      } catch (error) {
+        list.appendChild(makeEmpty("โหลด Wall ไม่สำเร็จ"));
+        showError(error);
+      }
+    }
+
+    async function hideWallItem(id) {
+      try {
+        await callable("publishWallMessage")({
+          wallId: id,
+          action: "unpublish",
+          confirmed: true
+        });
+        showToast("ซ่อนข้อความแล้ว", "success");
+        await loadMyWall();
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function loadAnalytics() {
+      if (!state.user) return;
+      const days = Number($("analyticsPeriod").value) || 30;
+      try {
+        const response = await callable("getUserAnalytics")({ days });
+        state.analytics = response.data || {};
+        renderAnalytics(state.analytics);
+      } catch (error) {
+        $("analyticsChart").replaceChildren(makeEmpty("โหลดสถิติไม่สำเร็จ ตรวจสอบ Cloud Function getUserAnalytics"));
+        $("wordCloud").replaceChildren();
+        showError(error);
+      }
+    }
+
+    function renderAnalytics(data) {
+      $("analyticsTotal").textContent = String(data.totalMessages ?? 0);
+      $("analyticsReplies").textContent = String(data.totalReplies ?? 0);
+      $("analyticsReactions").textContent = String(data.totalReactions ?? 0);
+
+      const chart = $("analyticsChart");
+      chart.replaceChildren();
+      const points = Array.isArray(data.dailyCounts) ? data.dailyCounts : [];
+      if (!points.length) {
+        chart.appendChild(makeEmpty("ยังไม่มีข้อมูลสถิติในช่วงเวลานี้"));
+      } else {
+        const bars = document.createElement("div");
+        bars.className = "bar-chart";
+        const max = Math.max(1, ...points.map((point) => Number(point.count || 0)));
+        for (const point of points) {
+          const col = document.createElement("div");
+          col.className = "bar-column";
+          const value = document.createElement("span");
+          value.className = "small muted";
+          value.textContent = String(point.count || 0);
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.style.height = `${Math.max(2, Number(point.count || 0) / max * 135)}px`;
+          bar.title = `${point.date}: ${point.count || 0} ข้อความ`;
+          const label = document.createElement("span");
+          label.className = "bar-label";
+          label.textContent = String(point.date || "").slice(-5);
+          col.append(value, bar, label);
+          bars.appendChild(col);
+        }
+        chart.appendChild(bars);
+      }
+
+      const cloud = $("wordCloud");
+      cloud.replaceChildren();
+      const words = Array.isArray(data.wordCloud) ? data.wordCloud : [];
+      if (!words.length) {
+        cloud.appendChild(makeEmpty("ยังไม่มีคำที่เพียงพอสำหรับ Word Cloud"));
+      } else {
+        for (const word of words.slice(0, 50)) {
+          const span = document.createElement("span");
+          span.textContent = String(word.word || "");
+          span.style.fontSize = `${Math.min(2.1, Math.max(.85, Number(word.weight || 1) / 5 + .8))}rem`;
+          cloud.appendChild(span);
+        }
+      }
+    }
+
+    async function loadSettings() {
+      if (!state.user || !state.userDoc) return;
+      const profile = state.userDoc;
+      $("profileDisplayName").value = profile.displayName || "";
+      $("profileUsername").value = profile.username || "";
+      $("profileBio").value = profile.bio || "";
+      $("profileTheme").value = profile.theme || "light";
+      $("acceptMessagesToggle").checked = profile.acceptsMessages !== false;
+      $("profilePublicToggle").checked = profile.profileVisibility !== false;
+      $("showHintsToggle").checked = profile.preferences?.showHints !== false;
+      $("wallVisibilityToggle").checked = profile.publicWallEnabled === true;
+      renderAvatar($("profilePhotoPreview"), state.profilePhotoURL);
+      await loadBlockedTokens();
+    }
+
+    async function saveProfile(event) {
+      event.preventDefault();
+      if (!state.user) return;
+
+      const displayName = safeText($("profileDisplayName").value, 60);
+      const username = $("profileUsername").value.trim();
+      const bio = safeText($("profileBio").value, 240);
+      if (!displayName) {
+        showToast("กรุณาระบุชื่อที่แสดง", "error");
+        return;
+      }
+      if (!validateUsername(username)) {
+        showToast("Username ต้องเป็นภาษาอังกฤษ ตัวเลข หรือ _ ความยาว 3–24 ตัว", "error");
+        return;
+      }
+
+      const button = $("profileForm").querySelector('button[type="submit"]');
+      setBusy(button, true, "กำลังบันทึก...");
+      try {
+        if (username.toLowerCase() !== String(state.userDoc.username || "").toLowerCase()) {
+          await callable("reserveUsername")({
+            username,
+            displayName,
+            photoURL: state.profilePhotoURL || "",
+            bio,
+            theme: $("profileTheme").value
+          });
+        }
+
+        await updateDoc(doc(db, "users", state.user.uid), {
+          displayName,
+          bio,
+          theme: $("profileTheme").value,
+          acceptsMessages: $("acceptMessagesToggle").checked,
+          profileVisibility: $("profilePublicToggle").checked,
+          publicWallEnabled: $("wallVisibilityToggle").checked,
+          "preferences.showHints": $("showHintsToggle").checked,
+          updatedAt: serverTimestamp()
+        });
+
+        await updateProfile(state.user, { displayName });
+        await loadCurrentUserProfile(state.user);
+        showToast("บันทึกโปรไฟล์แล้ว", "success");
+        navigate("overview");
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(button, false);
+      }
+    }
+
+    async function uploadProfilePhoto(file) {
+      if (!state.user) return;
+      const error = validateImage(file);
+      if (error) {
+        showToast(error, "error");
+        return;
+      }
+
+      const status = $("profileUploadStatus");
+      status.textContent = "กำลังอัปโหลดรูปโปรไฟล์...";
+      try {
+        const oldPath = state.userDoc?.photoStoragePath || "";
+        const path = `profilePhotos/${state.user.uid}/${randomId(16)}.${file.type.split("/")[1]}`;
+        const uploadRef = ref(storage, path);
+        const task = uploadBytesResumable(uploadRef, file, {
+          contentType: file.type,
+          customMetadata: { ownerUid: state.user.uid }
+        });
+
+        state.currentUploadTask = task;
+        await new Promise((resolve, reject) => {
+          task.on("state_changed", (snapshot) => {
+            const progress = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
+            status.textContent = `กำลังอัปโหลด ${progress}%`;
+          }, reject, resolve);
+        });
+
+        const url = await getDownloadURL(uploadRef);
+        await updateDoc(doc(db, "users", state.user.uid), {
+          photoURL: url,
+          photoStoragePath: path,
+          updatedAt: serverTimestamp()
+        });
+        state.profilePhotoURL = url;
+        await loadCurrentUserProfile(state.user);
+        renderAvatar($("profilePhotoPreview"), url);
+
+        if (oldPath && oldPath !== path) {
+          try {
+            await deleteObject(ref(storage, oldPath));
+          } catch {
+            console.warn("Old profile image cleanup failed");
+          }
+        }
+
+        status.textContent = "อัปโหลดรูปโปรไฟล์แล้ว";
+        showToast("อัปโหลดรูปโปรไฟล์แล้ว", "success");
+      } catch (error) {
+        status.textContent = "อัปโหลดไม่สำเร็จ";
+        showError(error);
+      } finally {
+        state.currentUploadTask = null;
+      }
+    }
+
+    async function removeProfilePhoto() {
+      if (!state.user) return;
+      const oldPath = state.userDoc?.photoStoragePath || "";
+      try {
+        await updateDoc(doc(db, "users", state.user.uid), {
+          photoURL: "",
+          photoStoragePath: "",
+          updatedAt: serverTimestamp()
+        });
+        state.profilePhotoURL = "";
+        if (oldPath) {
+          try {
+            await deleteObject(ref(storage, oldPath));
+          } catch {
+            console.warn("Profile image cleanup failed");
+          }
+        }
+        await loadCurrentUserProfile(state.user);
+        renderAvatar($("profilePhotoPreview"), "");
+        showToast("ลบรูปโปรไฟล์แล้ว", "success");
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function loadBlockedTokens() {
+      if (!state.user) return;
+      const list = $("blockedTokensList");
+      list.replaceChildren();
+      try {
+        const q = query(
+          collection(db, "blocks"),
+          where("ownerUid", "==", state.user.uid),
+          where("active", "==", true),
+          limit(100)
+        );
+        const snap = await getDocs(q);
+        state.blockedTokens = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+        if (snap.empty) {
+          list.appendChild(makeEmpty("ยังไม่มี Token ที่ถูกบล็อก"));
+          return;
+        }
+        for (const item of state.blockedTokens) {
+          const card = document.createElement("div");
+          card.className = "message-card";
+          const text = document.createElement("div");
+          text.className = "small muted break";
+          text.textContent = `Token: ${String(item.data.senderToken || "").slice(0, 12)}…`;
+          const unblock = createActionButton("ปลดบล็อก", "btn btn-small", async () => {
+            try {
+              await callable("blockSenderToken")({
+                blockId: item.id,
+                senderToken: item.data.senderToken,
+                action: "unblock"
+              });
+              showToast("ส่งคำขอปลดบล็อกแล้ว", "success");
+              await loadBlockedTokens();
+            } catch (error) {
+              showError(error);
+            }
+          });
+          card.append(text, unblock);
+          list.appendChild(card);
+        }
+      } catch (error) {
+        list.appendChild(makeEmpty("โหลดรายการบล็อกไม่สำเร็จ"));
+        showError(error);
+      }
+    }
+
+    async function changeWallEnabled(enabled) {
+      if (!state.user) return;
+      try {
+        await updateDoc(doc(db, "users", state.user.uid), {
+          publicWallEnabled: enabled,
+          updatedAt: serverTimestamp()
+        });
+        state.userDoc.publicWallEnabled = enabled;
+        showToast(enabled ? "เปิด Public Wall แล้ว" : "ปิด Public Wall แล้ว", "success");
+      } catch (error) {
+        $("wallEnabledToggle").checked = !enabled;
+        showError(error);
+      }
+    }
+
+    function loadAccountView() {
+      if (!state.user) return;
+      $("accountEmail").textContent = state.user.email || "ไม่พบอีเมล";
+      $("accountVerificationStatus").textContent = state.user.emailVerified
+        ? "ยืนยันอีเมลแล้ว"
+        : "ยังไม่ได้ยืนยันอีเมล";
+    }
+
+    async function deleteMyAccount() {
+      if (!state.user) return;
+      const content = document.createElement("div");
+      content.className = "stack";
+      const warning = document.createElement("div");
+      warning.className = "notice error";
+      warning.textContent = "การลบบัญชีเป็นการดำเนินการที่มีผลกระทบต่อข้อมูลของคุณ ระบบจะส่งคำขอไปยัง Backend เพื่อจัดการข้อมูลที่เกี่ยวข้อง";
+      const label = document.createElement("label");
+      label.htmlFor = "deleteConfirmInput";
+      label.textContent = 'พิมพ์คำว่า "DELETE" เพื่อยืนยัน';
+      const input = document.createElement("input");
+      input.id = "deleteConfirmInput";
+      input.className = "control";
+      input.autocomplete = "off";
+      content.append(warning, label, input);
+
+      showModal("ลบบัญชี Whispr", content, [
+        { label: "ยกเลิก", className: "btn", onClick: () => {} },
+        {
+          label: "ยืนยันลบบัญชี",
+          className: "btn btn-danger",
+          close: false,
+          onClick: async () => {
+            if (input.value.trim() !== "DELETE") {
+              showToast('กรุณาพิมพ์ "DELETE" ให้ถูกต้อง', "error");
+              return;
+            }
+            try {
+              await callable("adminDeleteAccount")({
+                targetUid: state.user.uid,
+                confirmOwnAccountDeletion: true
+              });
+              await signOut(auth);
+              closeModal();
+              showToast("ดำเนินการลบบัญชีแล้ว", "success");
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    async function verifyEmail() {
+      if (!state.user) return;
+      try {
+        await sendEmailVerification(state.user);
+        showToast("ส่งอีเมลยืนยันแล้ว หากยังไม่พบให้ตรวจสอบโฟลเดอร์ Spam", "success");
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    async function openStoryModal(messageId, data) {
+      state.storyMessage = { id: messageId, data };
+      state.storyReply = data.replyText || "";
+      state.storyTheme = "light";
+
+      const wrap = document.createElement("div");
+      wrap.className = "stack";
+
+      const source = document.createElement("div");
+      source.className = "notice";
+      source.textContent = "ภาพจะถูกสร้างในเบราว์เซอร์ของคุณ การแชร์ไป Instagram อาจต้องทำผ่าน Share Sheet หรือดาวน์โหลดไฟล์ก่อน";
+
+      const preview = document.createElement("div");
+      preview.id = "storyPreview";
+      preview.className = "story-preview";
+      preview.style.background = state.storySettings.background;
+      preview.style.color = state.storySettings.textColor;
+
+      const controls = document.createElement("div");
+      controls.className = "grid-2";
+
+      const themeField = document.createElement("div");
+      themeField.className = "field";
+      const themeLabel = document.createElement("label");
+      themeLabel.textContent = "ธีมภาพ";
+      const themeSelect = document.createElement("select");
+      themeSelect.id = "storyThemeSelect";
+      themeSelect.className = "control";
+      for (const [value, label] of [
+        ["light", "Minimal Light"],
+        ["midnight", "Midnight Dark"],
+        ["gradient", "Gradient Modern"],
+        ["pastel", "Soft Pastel"]
+      ]) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        themeSelect.appendChild(option);
+      }
+      themeField.append(themeLabel, themeSelect);
+
+      const fontField = document.createElement("div");
+      fontField.className = "field";
+      const fontLabel = document.createElement("label");
+      fontLabel.textContent = "ขนาดตัวอักษร";
+      const fontRange = document.createElement("input");
+      fontRange.type = "range";
+      fontRange.id = "storyFontSize";
+      fontRange.min = "24";
+      fontRange.max = "54";
+      fontRange.value = String(state.storySettings.fontSize);
+      fontField.append(fontLabel, fontRange);
+      controls.append(themeField, fontField);
+
+      const colorFields = document.createElement("div");
+      colorFields.className = "grid-2";
+
+      const bgField = document.createElement("div");
+      bgField.className = "field";
+      const bgLabel = document.createElement("label");
+      bgLabel.textContent = "สีพื้นหลัง";
+      const bgColor = document.createElement("input");
+      bgColor.type = "color";
+      bgColor.id = "storyBgColor";
+      bgColor.value = state.storySettings.background;
+      bgField.append(bgLabel, bgColor);
+
+      const textField = document.createElement("div");
+      textField.className = "field";
+      const textLabel = document.createElement("label");
+      textLabel.textContent = "สีข้อความ";
+      const textColor = document.createElement("input");
+      textColor.type = "color";
+      textColor.id = "storyTextColor";
+      textColor.value = state.storySettings.textColor;
+      textField.append(textLabel, textColor);
+      colorFields.append(bgField, textField);
+
+      const toggles = document.createElement("div");
+      toggles.className = "stack";
+      const showUsernameLabel = document.createElement("label");
+      showUsernameLabel.className = "checkline";
+      const showUsername = document.createElement("input");
+      showUsername.type = "checkbox";
+      showUsername.id = "storyShowUsername";
+      showUsername.checked = state.storySettings.showUsername;
+      const showUsernameText = document.createElement("span");
+      showUsernameText.textContent = "แสดง Username";
+      showUsernameLabel.append(showUsername, showUsernameText);
+
+      const showBrandLabel = document.createElement("label");
+      showBrandLabel.className = "checkline";
+      const showBrand = document.createElement("input");
+      showBrand.type = "checkbox";
+      showBrand.id = "storyShowBrand";
+      showBrand.checked = state.storySettings.showBrand;
+      const showBrandText = document.createElement("span");
+      showBrandText.textContent = "แสดงชื่อ Whispr";
+      showBrandLabel.append(showBrand, showBrandText);
+      toggles.append(showUsernameLabel, showBrandLabel);
+
+      const replyLabel = document.createElement("label");
+      replyLabel.htmlFor = "storyReplyText";
+      replyLabel.textContent = "คำตอบ (ถ้ามี)";
+      const replyText = document.createElement("textarea");
+      replyText.id = "storyReplyText";
+      replyText.className = "control";
+      replyText.maxLength = 2000;
+      replyText.value = state.storyReply;
+
+      wrap.append(source, preview, controls, colorFields, toggles, replyLabel, replyText);
+
+      const updatePreview = () => {
+        state.storyTheme = themeSelect.value;
+        state.storySettings.fontSize = Number(fontRange.value);
+        state.storySettings.background = bgColor.value;
+        state.storySettings.textColor = textColor.value;
+        state.storySettings.showUsername = showUsername.checked;
+        state.storySettings.showBrand = showBrand.checked;
+        state.storyReply = replyText.value;
+        renderStoryPreview(preview, data, state.storyReply);
+      };
+
+      [themeSelect, fontRange, bgColor, textColor, showUsername, showBrand, replyText]
+        .forEach((element) => element.addEventListener("input", updatePreview));
+
+      updatePreview();
+
+      showModal("สร้างภาพ Story", wrap, [
+        { label: "ปิด", className: "btn", onClick: () => {} },
+        {
+          label: "ดาวน์โหลด PNG",
+          className: "btn",
+          close: false,
+          onClick: async () => {
+            try {
+              await downloadStoryImage(data, state.storyReply);
+            } catch (error) {
+              showError(error);
+            }
+          }
+        },
+        {
+          label: "แชร์ภาพ",
+          className: "btn btn-primary",
+          close: false,
+          onClick: async () => {
+            try {
+              await shareStoryImage(data, state.storyReply);
+            } catch (error) {
+              showError(error);
+            }
+          }
+        }
+      ]);
+    }
+
+    function renderStoryPreview(container, data, replyText) {
+      container.className = `story-preview ${state.storyTheme}`;
+      container.style.background = state.storyTheme === "light" ? state.storySettings.background : "";
+      container.style.color = state.storySettings.textColor;
+
+      const card = document.createElement("div");
+      card.className = "story-card";
+      card.style.fontSize = `${Math.max(14, state.storySettings.fontSize / 2)}px`;
+      card.style.borderRadius = state.storySettings.cardStyle === "square" ? "3px" : "22px";
+      card.style.textAlign = state.storySettings.alignment;
+
+      const title = document.createElement("div");
+      title.className = "small";
+      title.textContent = "ข้อความนิรนาม";
+      title.style.opacity = ".7";
+
+      const message = document.createElement("div");
+      message.className = "story-content";
+      message.style.marginTop = "14px";
+      message.textContent = data.text || "มีข้อความแนบไฟล์";
+
+      card.append(title, message);
+
+      if (replyText) {
+        const reply = document.createElement("div");
+        reply.style.marginTop = "20px";
+        reply.style.paddingTop = "16px";
+        reply.style.borderTop = "1px solid currentColor";
+        const replyTitle = document.createElement("strong");
+        replyTitle.textContent = "คำตอบ";
+        const replyContent = document.createElement("div");
+        replyContent.textContent = replyText;
+        replyContent.style.marginTop = "8px";
+        card.append(replyTitle, replyContent);
+      }
+
+      if (state.storySettings.showUsername && state.userDoc?.username) {
+        const username = document.createElement("div");
+        username.className = "story-meta";
+        username.textContent = `@${state.userDoc.username}`;
+        card.appendChild(username);
+      }
+
+      container.replaceChildren(card);
+
+      if (state.storySettings.showBrand) {
+        const brand = document.createElement("div");
+        brand.textContent = "Whispr";
+        brand.style.position = "absolute";
+        brand.style.bottom = "14px";
+        brand.style.left = "0";
+        brand.style.right = "0";
+        brand.style.fontSize = "12px";
+        brand.style.opacity = ".7";
+        container.appendChild(brand);
+      }
+    }
+
+    function wrapTextCanvas(ctx, text, maxWidth) {
+      const lines = [];
+      const paragraphs = String(text || "").split("\n");
+      for (const paragraph of paragraphs) {
+        if (!paragraph) {
+          lines.push("");
+          continue;
+        }
+        let line = "";
+        for (const character of Array.from(paragraph)) {
+          const candidate = line + character;
+          if (ctx.measureText(candidate).width > maxWidth && line) {
+            lines.push(line);
+            line = character;
+          } else {
+            line = candidate;
+          }
+        }
+        lines.push(line);
+      }
+      return lines;
+    }
+
+    function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 60) {
+      const lines = wrapTextCanvas(ctx, text, maxWidth).slice(0, maxLines);
+      lines.forEach((line, index) => ctx.fillText(line, x, y + index * lineHeight));
+      return lines.length * lineHeight;
+    }
+
+    function roundedRect(ctx, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + width, y, x + width, y + height, r);
+      ctx.arcTo(x + width, y + height, x, y + height, r);
+      ctx.arcTo(x, y + height, x, y, r);
+      ctx.arcTo(x, y, x + width, y, r);
+      ctx.closePath();
+    }
+
+    function canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("สร้างไฟล์ภาพไม่สำเร็จ"));
+        }, "image/png");
+      });
+    }
+
+    async function createStoryBlob(data, replyText = "") {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("เบราว์เซอร์ไม่รองรับ Canvas");
+
+      const theme = state.storyTheme;
+      if (theme === "midnight") {
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (theme === "gradient") {
+        const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+        gradient.addColorStop(0, "#6558e8");
+        gradient.addColorStop(.55, "#db6cbd");
+        gradient.addColorStop(1, "#ffb88c");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (theme === "pastel") {
+        const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+        gradient.addColorStop(0, "#d9f5ed");
+        gradient.addColorStop(.55, "#f9e1f2");
+        gradient.addColorStop(1, "#fff0cf");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = state.storySettings.background || "#f5f0ff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      const darkTheme = theme === "midnight" || theme === "gradient";
+      const defaultText = darkTheme ? "#ffffff" : "#211d35";
+      const textColor = state.storySettings.textColor || defaultText;
+      const cardX = 90;
+      const cardY = 470;
+      const cardW = 900;
+      const cardH = replyText ? 930 : 780;
+
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,.13)";
+      ctx.shadowBlur = 36;
+      ctx.shadowOffsetY = 15;
+      ctx.fillStyle = theme === "midnight" ? "#202a3b" :
+        theme === "gradient" ? "rgba(18,18,40,.35)" :
+        theme === "pastel" ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.9)";
+      roundedRect(ctx, cardX, cardY, cardW, cardH, 38);
+      ctx.fill();
+      ctx.restore();
+
+      const centerX = 540;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = textColor;
+      ctx.font = '600 34px system-ui, "Noto Sans Thai", sans-serif';
+      ctx.fillText("ข้อความนิรนาม", centerX, cardY + 70);
+
+      ctx.font = `750 ${state.storySettings.fontSize}px system-ui, "Noto Sans Thai", sans-serif`;
+      const messageText = String(data.text || "มีข้อความแนบไฟล์");
+      const textHeight = drawWrappedText(ctx, messageText, centerX, cardY + 160, 740, state.storySettings.fontSize * 1.55, 20);
+      let y = cardY + 190 + textHeight;
+
+      if (replyText) {
+        ctx.globalAlpha = .5;
+        ctx.fillRect(cardX + 90, y, cardW - 180, 2);
+        ctx.globalAlpha = 1;
+        y += 38;
+        ctx.font = '700 32px system-ui, "Noto Sans Thai", sans-serif';
+        ctx.fillText("คำตอบ", centerX, y);
+        y += 55;
+        ctx.font = `600 ${Math.min(state.storySettings.fontSize, 40)}px system-ui, "Noto Sans Thai", sans-serif`;
+        drawWrappedText(ctx, replyText, centerX, y, 740, Math.min(state.storySettings.fontSize, 40) * 1.5, 12);
+      }
+
+      if (state.storySettings.showUsername && state.userDoc?.username) {
+        ctx.font = '500 30px system-ui, "Noto Sans Thai", sans-serif';
+        ctx.globalAlpha = .75;
+        ctx.fillText(`@${state.userDoc.username}`, centerX, 1490);
+        ctx.globalAlpha = 1;
+      }
+
+      if (state.storySettings.showBrand) {
+        ctx.font = '700 28px system-ui, "Noto Sans Thai", sans-serif';
+        ctx.globalAlpha = .7;
+        ctx.fillText("Whispr", centerX, 1790);
+        ctx.globalAlpha = 1;
+      }
+
+      return canvasToBlob(canvas);
+    }
+
+    async function downloadStoryImage(data, replyText = "") {
+      const blob = await createStoryBlob(data, replyText);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `whispr-story-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast("สร้างภาพ Story แล้ว", "success");
+    }
+
+    async function shareStoryImage(data, replyText = "") {
+      const blob = await createStoryBlob(data, replyText);
+      const file = new File([blob], `whispr-story-${Date.now()}.png`, { type: "image/png" });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Whispr Story",
+          text: "สร้างภาพข้อความจาก Whispr"
+        });
+        showToast("ส่งภาพไปยัง Share Sheet แล้ว หากต้องการโพสต์ Instagram ให้เลือกแอปที่รองรับ", "success");
+      } else {
+        await downloadStoryImage(data, replyText);
+        showToast("ดาวน์โหลดภาพแล้ว เปิด Instagram แล้วเพิ่มภาพจากแกลเลอรี", "success");
+      }
+    }
+
+    async function startVoiceRecording() {
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+        showToast("เบราว์เซอร์นี้ไม่รองรับการบันทึกเสียง", "error");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        state.currentAudioStream = stream;
+        state.recorderChunks = [];
+        const options = {};
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          options.mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+          options.mimeType = "audio/ogg;codecs=opus";
+        }
+
+        state.currentRecorder = new MediaRecorder(stream, options);
+        state.recorderStartedAt = Date.now();
+
+        state.currentRecorder.addEventListener("dataavailable", (event) => {
+          if (event.data && event.data.size) state.recorderChunks.push(event.data);
+        });
+
+        state.currentRecorder.addEventListener("stop", () => {
+          const type = state.currentRecorder?.mimeType || "audio/webm";
+          const blob = new Blob(state.recorderChunks, { type });
+          const extension = type.includes("ogg") ? "ogg" : "webm";
+          const file = new File([blob], `voice-note-${Date.now()}.${extension}`, { type });
+          const error = validateAudio(file);
+          if (error) {
+            showToast(error, "error");
+          } else {
+            state.pendingAudioFile = file;
+            previewSelectedFile(file, $("anonymousAudioPreview"), "audio");
+          }
+          stopMicrophoneTracks();
+          clearInterval(state.recorderTimer);
+          state.recorderTimer = null;
+        });
+
+        state.currentRecorder.start();
+        $("voiceRecordStatus").textContent = "กำลังบันทึกเสียง...";
+        $("startVoiceRecordButton").disabled = true;
+        $("stopVoiceRecordButton").disabled = false;
+
+        state.recorderTimer = window.setInterval(() => {
+          const seconds = Math.floor((Date.now() - state.recorderStartedAt) / 1000);
+          $("voiceRecordStatus").textContent = `กำลังบันทึก ${seconds} วินาที`;
+          if (seconds >= MAX_AUDIO_SECONDS) stopVoiceRecording();
+        }, 500);
+      } catch (error) {
+        showToast("ไม่สามารถเข้าถึงไมโครโฟนได้ กรุณาตรวจสอบสิทธิ์ของเบราว์เซอร์", "error");
+      }
+    }
+
+    function stopMicrophoneTracks() {
+      if (state.currentAudioStream) {
+        for (const track of state.currentAudioStream.getTracks()) track.stop();
+      }
+      state.currentAudioStream = null;
+    }
+
+    function stopVoiceRecording() {
+      if (state.currentRecorder && state.currentRecorder.state !== "inactive") {
+        state.currentRecorder.stop();
+      } else {
+        stopMicrophoneTracks();
+      }
+      $("startVoiceRecordButton").disabled = false;
+      $("stopVoiceRecordButton").disabled = true;
+      $("voiceRecordStatus").textContent = "บันทึกเสร็จแล้ว";
+    }
+
+    async function addVoiceRecorderControls() {
+      const form = $("anonymousMessageForm");
+      const section = document.createElement("section");
+      section.className = "stack";
+      section.style.padding = "14px";
+      section.style.border = "1px solid var(--line)";
+      section.style.borderRadius = "13px";
+
+      const title = document.createElement("h3");
+      title.textContent = "บันทึกข้อความเสียง";
+      const note = document.createElement("p");
+      note.className = "muted small";
+      note.textContent = "ต้องอนุญาตไมโครโฟนก่อนบันทึก เสียงจะไม่ถูกบันทึกจนกว่าคุณจะกดเริ่ม";
+      const status = document.createElement("div");
+      status.id = "voiceRecordStatus";
+      status.className = "muted small";
+      status.textContent = "ยังไม่ได้เริ่มบันทึก";
+      const buttons = document.createElement("div");
+      buttons.className = "row";
+
+      const start = document.createElement("button");
+      start.type = "button";
+      start.id = "startVoiceRecordButton";
+      start.className = "btn";
+      start.textContent = "เริ่มบันทึก";
+      start.addEventListener("click", startVoiceRecording);
+
+      const stop = document.createElement("button");
+      stop.type = "button";
+      stop.id = "stopVoiceRecordButton";
+      stop.className = "btn btn-danger";
+      stop.textContent = "หยุดบันทึก";
+      stop.disabled = true;
+      stop.addEventListener("click", stopVoiceRecording);
+
+      buttons.append(start, stop);
+      section.append(title, note, status, buttons);
+
+      const imageField = $("anonymousImage").closest(".field");
+      imageField.parentNode.insertBefore(section, imageField);
+    }
+
+    function addVoiceEffectsControls() {
+      const container = document.createElement("section");
+      container.className = "stack";
+      container.style.marginTop = "10px";
+
+      const label = document.createElement("label");
+      label.htmlFor = "voiceEffectSelect";
+      label.textContent = "เอฟเฟกต์เสียงสำหรับ Preview";
+
+      const select = document.createElement("select");
+      select.id = "voiceEffectSelect";
+      select.className = "control";
+      for (const [value, text] of [
+        ["original", "Original Voice"],
+        ["lower", "Lower Pitch — เสียงต่ำลงและช้าลง"],
+        ["higher", "Higher Pitch — เสียงสูงขึ้นและเร็วขึ้น"],
+        ["soft", "Soft Voice — ลดความแหลมบางส่วน"],
+        ["filtered", "Filtered Voice — กรองความถี่"]
+      ]) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        select.appendChild(option);
+      }
+
+      const previewButton = document.createElement("button");
+      previewButton.type = "button";
+      previewButton.className = "btn btn-small";
+      previewButton.textContent = "เล่น Preview ด้วยเอฟเฟกต์";
+      const note = document.createElement("div");
+      note.className = "muted small";
+      note.textContent = "เอฟเฟกต์นี้ใช้กับการเล่น Preview เท่านั้น ไม่ได้เปลี่ยนไฟล์เสียงต้นฉบับหรือรับประกันการปกปิดตัวตน";
+
+      previewButton.addEventListener("click", async () => {
+        if (!state.pendingAudioFile) {
+          showToast("กรุณาบันทึกหรือเลือกไฟล์เสียงก่อน", "error");
+          return;
+        }
+        await playAudioWithEffect(state.pendingAudioFile, select.value);
+      });
+
+      container.append(label, select, previewButton, note);
+      $("anonymousAudioPreview").appendChild(container);
+    }
+
+    async function playAudioWithEffect(file, effect) {
+      const audioContext = new AudioContext();
+      const arrayBuffer = await file.arrayBuffer();
+      const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+      const source = audioContext.createBufferSource();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+
+      source.buffer = decoded;
+      filter.type = "allpass";
+      gain.gain.value = 1;
+
+      if (effect === "lower") {
+        source.playbackRate.value = .8;
+      } else if (effect === "higher") {
+        source.playbackRate.value = 1.2;
+      } else if (effect === "soft") {
+        filter.type = "lowpass";
+        filter.frequency.value = 3500;
+      } else if (effect === "filtered") {
+        filter.type = "bandpass";
+        filter.frequency.value = 1400;
+        filter.Q.value = .8;
+      }
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioContext.destination);
+      source.addEventListener("ended", () => audioContext.close());
+      source.start();
+    }
+
+    async function signOutCurrentUser() {
+      try {
+        await signOut(auth);
+        showToast("ออกจากระบบแล้ว", "success");
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    function updateMessageCounter() {
+      $("messageCounter").textContent = `${$("anonymousText").value.length} / ${MAX_MESSAGE_LENGTH}`;
+    }
+
+    function configureEvents() {
+      $("themeToggle").addEventListener("click", () => {
+        const current = document.documentElement.dataset.theme || "light";
+        setTheme(current === "dark" ? "light" : "dark");
+      });
+
+      $("headerAuthButton").addEventListener("click", () => {
+        if (state.user) navigate("account");
+        else openAuth("login");
+      });
+
+      $("landingLoginButton").addEventListener("click", () => openAuth("login"));
+      $("landingRegisterButton").addEventListener("click", () => openAuth("register"));
+      $("switchAuthMode").addEventListener("click", () => {
+        openAuth(state.authMode === "login" ? "register" : "login");
+      });
+
+      $("authForm").addEventListener("submit", handleAuthSubmit);
+      $("resetPasswordButton").addEventListener("click", resetPassword);
+      $("anonymousMessageForm").addEventListener("submit", sendAnonymousMessage);
+      $("anonymousText").addEventListener("input", updateMessageCounter);
+      $("randomQuestionButton").addEventListener("click", pickRandomQuestion);
+
+      $("anonymousImage").addEventListener("change", (event) => {
+        const file = event.target.files?.[0] || null;
+        state.pendingImageFile = file;
+        previewSelectedFile(file, $("anonymousImagePreview"), "image");
+      });
+
+      $("anonymousAudio").addEventListener("change", (event) => {
+        const file = event.target.files?.[0] || null;
+        state.pendingAudioFile = file;
+        previewSelectedFile(file, $("anonymousAudioPreview"), "audio");
+        if (file) addVoiceEffectsControls();
+      });
+
+      $("copyShareLinkButton").addEventListener("click", () => copyText($("shareLink").value));
+      $("openPublicProfileButton").addEventListener("click", () => {
+        if (state.userDoc?.username) window.open(profileLink(state.userDoc.username), "_blank", "noopener,noreferrer");
+      });
+
+      $("refreshDashboardButton").addEventListener("click", async () => {
+        await loadCurrentUserProfile(state.user);
+        await loadDashboardOverview();
+        showToast("รีเฟรชข้อมูลแล้ว", "success");
+      });
+
+      $("refreshInboxButton").addEventListener("click", () => loadInbox(true));
+      $("loadMoreMessagesButton").addEventListener("click", () => loadInbox(false));
+      $("applyInboxFiltersButton").addEventListener("click", applyInboxFilters);
+      $("clearInboxFiltersButton").addEventListener("click", () => {
+        $("inboxSearch").value = "";
+        $("inboxStatusFilter").value = "all";
+        $("inboxDateFrom").value = "";
+        $("inboxDateTo").value = "";
+        applyInboxFilters();
+      });
+      $("inboxSearch").addEventListener("input", applyInboxFilters);
+      $("inboxStatusFilter").addEventListener("change", applyInboxFilters);
+      $("analyticsPeriod").addEventListener("change", loadAnalytics);
+      $("profileForm").addEventListener("submit", saveProfile);
+
+      $("profilePhoto").addEventListener("change", async (event) => {
+        const file = event.target.files?.[0];
+        if (file) await uploadProfilePhoto(file);
+        event.target.value = "";
+      });
+
+      $("removeProfilePhotoButton").addEventListener("click", removeProfilePhoto);
+      $("wallEnabledToggle").addEventListener("change", (event) => changeWallEnabled(event.target.checked));
+      $("verifyEmailButton").addEventListener("click", verifyEmail);
+      $("changePasswordResetButton").addEventListener("click", async () => {
+        if (!state.user?.email) return;
+        try {
+          await sendPasswordResetEmail(auth, state.user.email);
+          showToast("ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว", "success");
+        } catch (error) {
+          showError(error);
+        }
+      });
+      $("deleteAccountButton").addEventListener("click", deleteMyAccount);
+      $("accountSignOutButton").addEventListener("click", signOutCurrentUser);
+
+      $("modalCloseButton").addEventListener("click", closeModal);
+      $("modalBackdrop").addEventListener("click", (event) => {
+        if (event.target === $("modalBackdrop")) closeModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeModal();
+      });
+
+      $("brandHome").addEventListener("click", (event) => {
+        event.preventDefault();
+        if (state.user) navigate("overview");
+        else if (state.publicUid) {
+          setVisible("publicProfileView", true);
+        } else {
+          setVisible("heroSection", true);
+          setVisible("signedOutLanding", true);
+          setVisible("authView", false);
+        }
+      });
+    }
+
+    function handleAuthState(user) {
+      state.user = user;
+      setConnectionState(user ? "เข้าสู่ระบบแล้ว" : "พร้อมใช้งาน", "success");
+      $("headerAuthButton").textContent = user ? "บัญชีของฉัน" : "เข้าสู่ระบบ";
+
+      if (!user) {
+        state.userDoc = null;
+        state.messages = [];
+        setVisible("dashboardView", false);
+        setVisible("authView", false);
+        setVisible("signedOutLanding", !state.publicUid);
+        if (!state.publicUid) setVisible("heroSection", true);
+        return;
+      }
+
+      setVisible("authView", false);
+      setVisible("signedOutLanding", false);
+      setVisible("publicProfileView", Boolean(state.publicUid));
+      setVisible("dashboardView", true);
+      setVisible("heroSection", false);
+
+      loadCurrentUserProfile(user)
+        .then(async () => {
+          renderNavigation();
+          navigate("overview");
+          await loadMyWall();
+          await loadDashboardOverview();
+        })
+        .catch((error) => {
+          showError(error);
+          setConnectionState("โปรไฟล์ไม่พร้อม", "error");
+        });
+    }
+
+    async function initialize() {
+      renderNavigation();
+      configureEvents();
+      setTheme(localStorage.getItem("whispr_theme") || "light");
+
+      await addVoiceRecorderControls();
+
+      const url = new URL(window.location.href);
+      const username = url.searchParams.get("u");
+      if (username) {
+        await loadPublicProfile(username);
+      } else {
+        setVisible("signedOutLanding", true);
+      }
+
+      onAuthStateChanged(auth, handleAuthState);
+    }
+
+    initialize().catch((error) => {
+      setConnectionState("เริ่มระบบไม่สำเร็จ", "error");
+      showError(error);
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (state.currentUploadTask) state.currentUploadTask.cancel();
+      if (state.recorderTimer) clearInterval(state.recorderTimer);
+      if (state.currentRecorder && state.currentRecorder.state !== "inactive") {
+        state.currentRecorder.stop();
+      }
+      stopMicrophoneTracks();
+    });
+  </script>
 </body>
 </html>
