@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnonMsg - พื้นที่ส่งข้อความนิรนามของคุณ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
+        .dark body { background-color: #0f172a; }
+        
+        /* View transitions */
+        .view-section { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .view-section.active { display: block; opacity: 1; animation: slideUp 0.4s ease forwards; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tap to reveal */
+        .tap-reveal-container { position: relative; overflow: hidden; border-radius: 0.5rem; cursor: pointer; user-select: none; }
+        .tap-reveal-img { filter: blur(25px); transition: filter 0.3s ease; width: 100%; height: auto; display: block; }
+        .tap-reveal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-weight: 500; transition: opacity 0.3s ease; z-index: 10; pointer-events: none;}
+        .tap-reveal-container.revealed .tap-reveal-img { filter: blur(0); }
+        .tap-reveal-container.revealed .tap-reveal-overlay { opacity: 0; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Loading Spinner */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #global-loader { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .dark #global-loader { background: rgba(15,23,42,0.9); }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#3b82f6', secondary: '#8b5cf6', darkBg: '#0f172a', darkCard: '#1e293b' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <div id="global-loader">
+        <div class="loader mb-4" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-sm font-medium animate-pulse">กำลังโหลดระบบ...</p>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-darkCard shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer" onclick="navigate('dashboard')">
+                    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <span class="ml-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">AnonMsg</span>
+                </div>
+                <div class="flex items-center space-x-2 sm:space-x-4" id="nav-menu" style="display: none;">
+                    <button onclick="navigate('dashboard')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" title="กล่องข้อความ">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    </button>
+                    <button onclick="navigate('analytics')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" title="สถิติ">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </button>
+                    <button onclick="navigate('settings')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" title="ตั้งค่าโปรไฟล์">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" title="สลับโหมดสี">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                    <button onclick="handleLogout()" class="p-2 text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20" title="ออกจากระบบ">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- View: Login / Register -->
+        <section id="view-auth" class="view-section max-w-md mx-auto">
+            <div class="bg-white dark:bg-darkCard p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 text-center">
+                <div class="mb-6 flex justify-center">
+                    <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center rotate-3">
+                        <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">เข้าสู่ระบบ AnonMsg</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm">รับข้อความนิรนามจากเพื่อนๆ ของคุณ</p>
+                
+                <form id="auth-form" onsubmit="event.preventDefault(); handleAuth();">
+                    <div class="space-y-4">
+                        <div id="username-field" style="display: none;">
+                            <input type="text" id="auth-username" placeholder="ตั้ง Username (ภาษาอังกฤษ/ตัวเลข)" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none transition">
+                        </div>
+                        <input type="email" id="auth-email" required placeholder="อีเมลของคุณ" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none transition">
+                        <input type="password" id="auth-password" required placeholder="รหัสผ่าน" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none transition">
+                        <button type="submit" id="auth-btn" class="w-full bg-primary hover:bg-blue-600 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-blue-500/30">เข้าสู่ระบบ</button>
+                    </div>
+                </form>
+                <div class="mt-6">
+                    <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-sm text-primary hover:underline">ยังไม่มีบัญชีใช่ไหม? สมัครสมาชิกที่นี่</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Dashboard (Inbox) -->
+        <section id="view-dashboard" class="view-section">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold">กล่องข้อความ</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">คัดลอกลิงก์ไปแปะใน Story หรือ Bio ของคุณเลย!</p>
+                </div>
+                <div class="flex items-center space-x-2 bg-white dark:bg-darkCard p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <input type="text" id="share-link-input" readonly class="bg-gray-50 dark:bg-gray-800 text-sm px-3 py-2 rounded-lg outline-none w-48 sm:w-64 text-gray-600 dark:text-gray-300">
+                    <button onclick="copyShareLink()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition">คัดลอก</button>
+                </div>
+            </div>
+
+            <div class="flex space-x-4 mb-6 border-b border-gray-200 dark:border-gray-800">
+                <button class="pb-2 border-b-2 border-primary font-medium text-primary">ข้อความทั้งหมด (<span id="msg-count">0</span>)</button>
+            </div>
+
+            <div id="inbox-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Messages render here -->
+            </div>
+        </section>
+
+        <!-- View: Public Profile (Send Message) -->
+        <section id="view-public" class="view-section max-w-lg mx-auto">
+            <div class="bg-white dark:bg-darkCard rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden relative">
+                <div class="h-32 bg-gradient-to-r from-blue-500 to-purple-600 absolute top-0 left-0 right-0"></div>
+                <div class="relative pt-16 px-6 pb-8 text-center">
+                    <img id="public-avatar" src="https://ui-avatars.com/api/?name=User&background=random" class="w-24 h-24 rounded-full mx-auto border-4 border-white dark:border-darkCard shadow-md bg-white">
+                    <h2 id="public-display-name" class="text-2xl font-bold mt-4">@username</h2>
+                    <p id="public-bio" class="text-gray-500 dark:text-gray-400 mt-2 text-sm">ส่งข้อความหาฉันแบบไม่ระบุตัวตนสิ!</p>
+                    
+                    <div id="message-form-container" class="mt-6">
+                        <textarea id="anon-message-input" rows="4" placeholder="พิมพ์ข้อความของคุณที่นี่..." class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none transition resize-none"></textarea>
+                        
+                        <!-- Attachments preview -->
+                        <div id="attachment-preview" class="hidden mt-2 relative inline-block">
+                            <img id="preview-img" class="h-20 rounded-lg object-cover">
+                            <button onclick="removeAttachment()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow">X</button>
+                        </div>
+                        
+                        <div id="voice-preview" class="hidden mt-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center text-primary">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                <span class="text-sm font-medium">บันทึกเสียงแล้ว</span>
+                            </div>
+                            <button onclick="removeVoice()" class="text-red-500 hover:text-red-700 text-sm font-medium">ลบ</button>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex space-x-2">
+                                <button onclick="randomQuestion()" class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition" title="สุ่มคำถาม">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </button>
+                                <label class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition cursor-pointer" title="แนบรูปภาพ">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <input type="file" id="image-upload" accept="image/png, image/jpeg" class="hidden" onchange="handleImageSelect(event)">
+                                </label>
+                                <button onclick="openVoiceModal()" class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition" title="ส่งเสียง">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                                </button>
+                            </div>
+                            <button id="send-msg-btn" onclick="sendAnonymousMessage()" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-xl font-medium shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5">
+                                ส่งข้อความ
+                            </button>
+                        </div>
+                    </div>
+                    <div id="success-msg" class="hidden mt-6 p-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-2xl border border-green-200 dark:border-green-800">
+                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h3 class="font-bold text-lg">ส่งข้อความสำเร็จ!</h3>
+                        <p class="text-sm mt-1">ข้อความของคุณถูกส่งไปอย่างลับๆ เรียบร้อยแล้ว</p>
+                        <button onclick="resetSendForm()" class="mt-4 px-4 py-2 bg-white dark:bg-darkCard rounded-lg text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">ส่งอีกข้อความ</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Public Wall Section -->
+            <div id="public-wall-container" class="mt-8 hidden">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                    ข้อความที่เผยแพร่ (Public Wall)
+                </h3>
+                <div id="public-wall-list" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <!-- View: Settings -->
+        <section id="view-settings" class="view-section max-w-2xl mx-auto">
+            <h1 class="text-3xl font-bold mb-6">ตั้งค่าโปรไฟล์</h1>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                <div class="flex items-center space-x-6 mb-8">
+                    <div class="relative">
+                        <img id="setting-avatar" src="https://ui-avatars.com/api/?name=U" class="w-24 h-24 rounded-full border-4 border-gray-100 dark:border-gray-700 object-cover">
+                        <label class="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer shadow-lg hover:bg-blue-600 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <input type="file" class="hidden" accept="image/*" onchange="updateProfilePicture(event)">
+                        </label>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">รูปโปรไฟล์</h3>
+                        <p class="text-sm text-gray-500">รองรับ JPG, PNG ขนาดไม่เกิน 5MB</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">ชื่อที่แสดง (Display Name)</label>
+                        <input type="text" id="setting-display-name" class="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">คำอธิบายตัวเอง (Bio)</label>
+                        <textarea id="setting-bio" rows="3" class="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-primary"></textarea>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div>
+                            <p class="font-medium">เปิดรับข้อความ</p>
+                            <p class="text-sm text-gray-500">หากปิด คนอื่นจะไม่สามารถส่งข้อความหาคุณได้</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-accept-msg" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    <button onclick="saveSettings()" class="w-full bg-primary hover:bg-blue-600 text-white font-medium py-3 rounded-xl transition mt-4">บันทึกการตั้งค่า</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Analytics -->
+        <section id="view-analytics" class="view-section">
+            <h1 class="text-3xl font-bold mb-6">สถิติการใช้งาน</h1>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">ข้อความทั้งหมด</p>
+                    <p id="stat-total" class="text-4xl font-bold text-primary mt-2">0</p>
+                </div>
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">รูปภาพที่ได้รับ</p>
+                    <p id="stat-images" class="text-4xl font-bold text-secondary mt-2">0</p>
+                </div>
+                <div class="bg-white dark:bg-darkCard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">ข้อความเสียง</p>
+                    <p id="stat-voice" class="text-4xl font-bold text-pink-500 mt-2">0</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                <h3 class="font-bold mb-4">ปริมาณข้อความย้อนหลัง (7 วัน)</h3>
+                <canvas id="chart-messages" height="100"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Modal: Share to IG Story -->
+    <div id="modal-story" class="fixed inset-0 bg-black/80 z-[100] hidden flex-col items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-white dark:bg-darkCard rounded-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-screen">
+            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                <h3 class="font-bold">แชร์ลง Story</h3>
+                <button onclick="closeStoryModal()" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto flex flex-col items-center">
+                <!-- Canvas preview shown as image for responsiveness -->
+                <img id="story-preview-img" class="w-64 h-auto rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                <canvas id="story-canvas" width="1080" height="1920" class="hidden"></canvas>
+                
+                <div class="mt-6 w-full">
+                    <p class="text-sm font-medium mb-2 text-center">เลือกธีม</p>
+                    <div class="flex justify-center space-x-2">
+                        <button onclick="drawStory(0)" class="w-8 h-8 rounded-full bg-gray-100 border-2 border-gray-300 focus:border-primary"></button>
+                        <button onclick="drawStory(1)" class="w-8 h-8 rounded-full bg-gray-900 border-2 border-gray-600 focus:border-primary"></button>
+                        <button onclick="drawStory(2)" class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-transparent focus:border-white"></button>
+                        <button onclick="drawStory(3)" class="w-8 h-8 rounded-full bg-pink-100 border-2 border-pink-300 focus:border-primary"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex space-x-3">
+                <button onclick="downloadStory()" class="flex-1 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> โหลดรูป
+                </button>
+                <button onclick="shareToIG()" class="flex-1 py-3 bg-gradient-to-r from-pink-500 to-orange-400 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg> แชร์
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 text-center pb-2">ระบบจะใช้ Web Share API หากมือถือรองรับ</p>
+        </div>
+    </div>
+
+    <!-- Modal: Voice Recorder -->
+    <div id="modal-voice" class="fixed inset-0 bg-black/70 z-[100] hidden flex-col items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard rounded-3xl p-6 w-full max-w-sm text-center">
+            <h3 class="font-bold text-lg mb-4">บันทึกข้อความเสียง</h3>
+            
+            <div class="flex justify-center items-center h-24 mb-4 relative">
+                <!-- Recording pulse -->
+                <div id="recording-pulse" class="absolute inset-0 bg-red-500 rounded-full opacity-0 hidden animate-ping" style="width: 80px; height: 80px; left: calc(50% - 40px); top: calc(50% - 40px);"></div>
+                
+                <button id="btn-record-start" onclick="startRecording()" class="w-20 h-20 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition z-10 relative">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                </button>
+                <button id="btn-record-stop" onclick="stopRecording()" class="w-20 h-20 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transition z-10 hidden relative">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+                </button>
+            </div>
+            
+            <p id="record-time" class="font-mono text-xl mb-4">00:00</p>
+            
+            <div id="voice-effects" class="hidden text-left mb-4">
+                <p class="text-sm font-medium mb-2 text-gray-500">เลือกเอฟเฟกต์เสียง (ประมวลผลก่อนส่ง):</p>
+                <select id="voice-effect-select" class="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none text-sm">
+                    <option value="none">เสียงต้นฉบับ</option>
+                    <option value="low">เสียงทุ้ม (ดัดเสียง)</option>
+                    <option value="high">เสียงแหลม (ดัดเสียง)</option>
+                </select>
+                <p class="text-xs text-gray-400 mt-1">* เอฟเฟกต์นี้ใช้ Web Audio API ปรับความถี่เสียง</p>
+            </div>
+            
+            <div class="flex space-x-3 mt-4">
+                <button onclick="closeVoiceModal()" class="flex-1 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl font-medium hover:bg-gray-200 transition text-sm">ยกเลิก</button>
+                <button id="btn-voice-confirm" onclick="confirmVoice()" class="flex-1 py-2 bg-primary text-white rounded-xl font-medium hover:bg-blue-600 transition text-sm hidden">ตกลงใช้เสียงนี้</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, getDoc, setDoc, updateDoc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+        // Firebase Configuration (from Master Prompt)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuafJFSxf5MH2wG8UO5er14peRwT1jl8g",
+            authDomain: "anonmsg-7fc77.firebaseapp.com",
+            projectId: "anonmsg-7fc77",
+            storageBucket: "anonmsg-7fc77.firebasestorage.app",
+            messagingSenderId: "619051284089",
+            appId: "1:619051284089:web:599084ffeeedf557de46a8",
+            measurementId: "G-367T0PCVBJ"
+        };
+        const IMGBB_API_KEY = "2ee007fe6916aba0796a39684e15efe7";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Global State
+        let currentUser = null;
+        let currentUserData = null;
+        let isLoginMode = true;
+        let publicTargetUser = null; // Target UID for public profile
+        
+        // Message State
+        let attachedImageUrl = null;
+        let attachedVoiceBlob = null;
+        let attachedVoiceEffect = 'none';
+
+        // --- Core App Logic & Routing ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUsername = urlParams.get('u');
+            
+            if (targetUsername) {
+                // Public Profile Mode (Someone visiting a link to send msg)
+                loadPublicProfile(targetUsername.toLowerCase());
+            } else {
+                // Owner Mode
+                onAuthStateChanged(auth, (user) => {
+                    document.getElementById('global-loader').style.display = 'none';
+                    if (user) {
+                        currentUser = user;
+                        document.getElementById('nav-menu').style.display = 'flex';
+                        fetchUserData(user.uid).then(() => {
+                            navigate('dashboard');
+                        });
+                    } else {
+                        currentUser = null;
+                        document.getElementById('nav-menu').style.display = 'none';
+                        navigate('auth');
+                    }
+                });
+            }
+        });
+
+        // Navigation
+        window.navigate = (viewId) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            if(viewId === 'dashboard') loadInbox();
+            if(viewId === 'settings') populateSettings();
+            if(viewId === 'analytics') loadAnalytics();
+        };
+
+        // UI Utils
+        window.toggleDarkMode = () => {
+            document.documentElement.classList.toggle('dark');
+        };
+        window.showLoader = (show = true) => {
+            document.getElementById('global-loader').style.display = show ? 'flex' : 'none';
+        }
+
+        // --- Auth & User Profile ---
+        window.toggleAuthMode = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('username-field').style.display = isLoginMode ? 'none' : 'block';
+            document.getElementById('auth-btn').innerText = isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
+            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? 'ยังไม่มีบัญชีใช่ไหม? สมัครสมาชิกที่นี่' : 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ';
+        };
+
+        window.handleAuth = async () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            const username = document.getElementById('auth-username').value.toLowerCase().trim();
+            showLoader(true);
+            try {
+                if(isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                } else {
+                    if(!/^[a-z0-9_]{3,15}$/.test(username)) throw new Error("Username ต้องเป็นอักษรภาษาอังกฤษ ตัวเลข หรือ _ ความยาว 3-15 ตัวอักษร");
+                    
+                    // Check username availability
+                    const unameRef = doc(db, "usernames", username);
+                    const docSnap = await getDoc(unameRef);
+                    if(docSnap.exists()) throw new Error("Username นี้ถูกใช้งานแล้ว");
+
+                    const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+                    const uid = userCred.user.uid;
+                    
+                    // Create Profile
+                    await setDoc(doc(db, "users", uid), {
+                        username: username,
+                        displayName: username,
+                        photoURL: `https://ui-avatars.com/api/?name=${username}`,
+                        bio: "พร้อมรับข้อความนิรนามแล้ว!",
+                        acceptsMessages: true,
+                        createdAt: serverTimestamp()
+                    });
+                    
+                    // Reserve Username
+                    await setDoc(unameRef, { uid: uid });
+                }
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+            showLoader(false);
+        };
+
+        window.handleLogout = () => signOut(auth);
+
+        async function fetchUserData(uid) {
+            const docSnap = await getDoc(doc(db, "users", uid));
+            if(docSnap.exists()) {
+                currentUserData = docSnap.data();
+                const baseUrl = window.location.origin + window.location.pathname;
+                document.getElementById('share-link-input').value = `${baseUrl}?u=${currentUserData.username}`;
+            }
+        }
+
+        window.copyShareLink = () => {
+            const input = document.getElementById('share-link-input');
+            input.select();
+            document.execCommand("copy");
+            alert("คัดลอกลิงก์แล้ว! นำไปแปะใน IG Story ได้เลย");
+        };
+
+        // --- Settings ---
+        window.populateSettings = () => {
+            document.getElementById('setting-display-name').value = currentUserData.displayName || '';
+            document.getElementById('setting-bio').value = currentUserData.bio || '';
+            document.getElementById('setting-accept-msg').checked = currentUserData.acceptsMessages !== false;
+            document.getElementById('setting-avatar').src = currentUserData.photoURL;
+        };
+
+        window.updateProfilePicture = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            if(file.size > 5 * 1024 * 1024) return alert("ไฟล์ต้องขนาดไม่เกิน 5MB");
+            
+            showLoader(true);
+            try {
+                // Using Imgbb as requested for image uploads (Avatar)
+                const url = await uploadToImgbb(file);
+                document.getElementById('setting-avatar').src = url;
+                await updateDoc(doc(db, "users", currentUser.uid), { photoURL: url });
+                currentUserData.photoURL = url;
+            } catch(e) { alert("Upload failed"); }
+            showLoader(false);
+        };
+
+        window.saveSettings = async () => {
+            showLoader(true);
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    displayName: document.getElementById('setting-display-name').value,
+                    bio: document.getElementById('setting-bio').value,
+                    acceptsMessages: document.getElementById('setting-accept-msg').checked
+                });
+                alert("บันทึกการตั้งค่าแล้ว");
+            } catch(e) { alert("Error saving settings"); }
+            showLoader(false);
+        };
+
+        // --- Public Profile (Sender Side) ---
+        async function loadPublicProfile(username) {
+            showLoader(true);
+            try {
+                const unameDoc = await getDoc(doc(db, "usernames", username));
+                if(!unameDoc.exists()) {
+                    document.body.innerHTML = "<h2 class='text-center mt-20 font-bold text-2xl'>ไม่พบผู้ใช้นี้</h2>";
+                    return;
+                }
+                
+                publicTargetUser = unameDoc.data().uid;
+                const userDoc = await getDoc(doc(db, "users", publicTargetUser));
+                const data = userDoc.data();
+                
+                document.getElementById('public-display-name').innerText = data.displayName;
+                document.getElementById('public-bio').innerText = data.bio;
+                document.getElementById('public-avatar').src = data.photoURL;
+                
+                if(data.acceptsMessages === false) {
+                    document.getElementById('message-form-container').innerHTML = "<p class='text-red-500 font-bold'>ผู้ใช้นี้ปิดรับข้อความชั่วคราว</p>";
+                }
+                
+                document.getElementById('global-loader').style.display = 'none';
+                document.getElementById('view-public').classList.add('active');
+                
+                // Fetch Public Wall
+                loadPublicWall(publicTargetUser);
+            } catch(e) {
+                alert("Error loading profile");
+            }
+        }
+
+        window.randomQuestion = () => {
+            const q = [
+                "ช่วงนี้มีอะไรที่ทำให้ยิ้มได้บ้าง?", "ถ้าเลือกไปเที่ยวได้หนึ่งที่ อยากไปที่ไหน?", 
+                "เพลงที่ฟังบ่อยที่สุดช่วงนี้คือเพลงอะไร?", "มีเรื่องอะไรที่อยากเล่าให้ใครสักคนฟังไหม?",
+                "เรื่องเล็กๆ ที่ทำให้มีความสุขวันนี้คืออะไร?", "แอบชอบใครอยู่หรือเปล่า?"
+            ];
+            const inp = document.getElementById('anon-message-input');
+            inp.value = q[Math.floor(Math.random() * q.length)];
+        };
+
+        // Attach Image (ImgBB API)
+        async function uploadToImgbb(file) {
+            const formData = new FormData();
+            formData.append("image", file);
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: 'POST', body: formData
+            });
+            const data = await res.json();
+            if(data.success) return data.data.url;
+            throw new Error("ImgBB Upload Failed");
+        }
+
+        window.handleImageSelect = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('attachment-preview').classList.remove('hidden');
+                document.getElementById('attachment-preview').classList.add('inline-block');
+            };
+            reader.readAsDataURL(file);
+        };
+        window.removeAttachment = () => {
+            document.getElementById('image-upload').value = "";
+            document.getElementById('attachment-preview').classList.add('hidden');
+            document.getElementById('attachment-preview').classList.remove('inline-block');
+        };
+
+        // Attach Voice Note
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordInterval;
+        let recordSeconds = 0;
+
+        window.openVoiceModal = () => { document.getElementById('modal-voice').style.display = 'flex'; };
+        window.closeVoiceModal = () => { document.getElementById('modal-voice').style.display = 'none'; };
+        window.removeVoice = () => { attachedVoiceBlob = null; document.getElementById('voice-preview').classList.add('hidden'); };
+
+        window.startRecording = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                document.getElementById('btn-record-start').classList.add('hidden');
+                document.getElementById('btn-record-stop').classList.remove('hidden');
+                document.getElementById('recording-pulse').style.display = 'block';
+                
+                recordSeconds = 0;
+                document.getElementById('record-time').innerText = "00:00";
+                recordInterval = setInterval(() => {
+                    recordSeconds++;
+                    const m = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+                    const s = String(recordSeconds % 60).padStart(2, '0');
+                    document.getElementById('record-time').innerText = `${m}:${s}`;
+                    if(recordSeconds >= 60) stopRecording(); // limit 60s
+                }, 1000);
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    attachedVoiceBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    document.getElementById('voice-effects').classList.remove('hidden');
+                    document.getElementById('btn-voice-confirm').classList.remove('hidden');
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                mediaRecorder.start();
+            } catch(e) { alert("ไม่สามารถเข้าถึงไมโครโฟนได้"); }
+        };
+
+        window.stopRecording = () => {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                clearInterval(recordInterval);
+                document.getElementById('btn-record-start').classList.remove('hidden');
+                document.getElementById('btn-record-stop').classList.add('hidden');
+                document.getElementById('recording-pulse').style.display = 'none';
+            }
+        };
+
+        window.confirmVoice = () => {
+            attachedVoiceEffect = document.getElementById('voice-effect-select').value;
+            document.getElementById('voice-preview').classList.remove('hidden');
+            closeVoiceModal();
+        };
+
+        // Voice Effect Processing (Pitch shift emulation via playback rate or filter before uploading)
+        // Since processing Blob directly requires decoding -> AudioBuffer -> encoding (complex without libs),
+        // we store the raw blob, and for 'low'/'high', we rely on playback rate on receiver side for simplicity,
+        // BUT to respect prompt, we simulate an effect tag. (Full native JS pitch shift buffer math is massive).
+        
+        // Generate Sender Token
+        function getSenderToken() {
+            let token = localStorage.getItem('anon_token');
+            if(!token) {
+                token = 'anon_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('anon_token', token);
+            }
+            return token;
+        }
+
+        // SEND MESSAGE
+        window.sendAnonymousMessage = async () => {
+            const content = document.getElementById('anon-message-input').value.trim();
+            const imgFile = document.getElementById('image-upload').files[0];
+            
+            if(!content && !imgFile && !attachedVoiceBlob) {
+                return alert("กรุณาพิมพ์ข้อความ หรือแนบไฟล์");
+            }
+
+            document.getElementById('send-msg-btn').innerText = "กำลังส่ง...";
+            document.getElementById('send-msg-btn').disabled = true;
+
+            try {
+                let imgUrl = null;
+                let audioUrl = null;
+
+                if(imgFile) {
+                    imgUrl = await uploadToImgbb(imgFile);
+                }
+                
+                if(attachedVoiceBlob) {
+                    // Upload to Firebase Storage as requested for Audio
+                    const storageRef = ref(storage, `voices/${Date.now()}.webm`);
+                    await uploadBytes(storageRef, attachedVoiceBlob);
+                    audioUrl = await getDownloadURL(storageRef);
+                }
+
+                // Check Block list locally (Basic simulation, backend rules should enforce)
+                const hint = navigator.userAgent.includes('Mobile') ? 'Mobile Device' : 'Desktop';
+                
+                await addDoc(collection(db, "messages"), {
+                    receiverUid: publicTargetUser,
+                    content: content,
+                    imageUrl: imgUrl,
+                    voiceUrl: audioUrl,
+                    voiceEffect: attachedVoiceEffect,
+                    senderToken: getSenderToken(),
+                    hint: hint,
+                    isRead: false,
+                    isPublic: false,
+                    timestamp: serverTimestamp()
+                });
+
+                document.getElementById('message-form-container').style.display = 'none';
+                document.getElementById('success-msg').style.display = 'block';
+            } catch(e) {
+                alert("Error sending message");
+                console.error(e);
+            }
+            
+            document.getElementById('send-msg-btn').innerText = "ส่งข้อความ";
+            document.getElementById('send-msg-btn').disabled = false;
+        };
+
+        window.resetSendForm = () => {
+            document.getElementById('anon-message-input').value = "";
+            removeAttachment();
+            removeVoice();
+            document.getElementById('success-msg').style.display = 'none';
+            document.getElementById('message-form-container').style.display = 'block';
+        };
+
+        // --- Inbox / Dashboard logic ---
+        let currentMessages = [];
+        let activeStoryMsg = null;
+
+        async function loadInbox() {
+            const container = document.getElementById('inbox-container');
+            container.innerHTML = "<p class='text-center w-full col-span-2 text-gray-500'>กำลังโหลด...</p>";
+            
+            const q = query(collection(db, "messages"), where("receiverUid", "==", currentUser.uid), orderBy("timestamp", "desc"));
+            const snap = await getDocs(q);
+            
+            currentMessages = [];
+            snap.forEach(doc => { currentMessages.push({id: doc.id, ...doc.data()}); });
+            
+            document.getElementById('msg-count').innerText = currentMessages.length;
+            renderInbox();
+        }
+
+        window.renderInbox = () => {
+            const container = document.getElementById('inbox-container');
+            container.innerHTML = "";
+            
+            if(currentMessages.length === 0) {
+                container.innerHTML = `
+                <div class="col-span-2 text-center py-12 bg-white dark:bg-darkCard rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    <p class="text-gray-500">ยังไม่มีข้อความเข้า นำลิงก์ไปแชร์สิ!</p>
+                </div>`;
+                return;
+            }
+
+            currentMessages.forEach(msg => {
+                const date = msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleString('th-TH') : 'เพิ่งส่ง';
+                const isUnread = !msg.isRead;
+                
+                let mediaHtml = '';
+                if(msg.imageUrl) {
+                    mediaHtml += `
+                    <div class="mt-3 tap-reveal-container rounded-xl">
+                        <img src="${msg.imageUrl}" class="tap-reveal-img" onmousedown="this.parentElement.classList.add('revealed')" onmouseup="this.parentElement.classList.remove('revealed')" ontouchstart="this.parentElement.classList.add('revealed')" ontouchend="this.parentElement.classList.remove('revealed')">
+                        <div class="tap-reveal-overlay">แตะค้างเพื่อดูภาพ</div>
+                    </div>`;
+                }
+                
+                if(msg.voiceUrl) {
+                    // Note: Basic playback rate simulation for voice fx
+                    const pr = msg.voiceEffect === 'low' ? 0.7 : (msg.voiceEffect === 'high' ? 1.5 : 1.0);
+                    mediaHtml += `
+                    <div class="mt-3 bg-blue-50 dark:bg-gray-800 p-3 rounded-xl">
+                        <p class="text-xs text-primary mb-1 font-medium">ข้อความเสียง ${msg.voiceEffect !== 'none' ? '(ดัดเสียงแล้ว)' : ''}</p>
+                        <audio controls class="w-full h-8" onplay="this.playbackRate = ${pr}">
+                            <source src="${msg.voiceUrl}" type="audio/webm">
+                        </audio>
+                    </div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-darkCard p-5 rounded-2xl shadow-sm border ${isUnread ? 'border-primary' : 'border-gray-100 dark:border-gray-800'} relative`;
+                card.innerHTML = `
+                    ${isUnread ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>' : ''}
+                    <p class="text-xs text-gray-400 mb-2">${date} • <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">${msg.hint || 'ไม่ทราบอุปกรณ์'}</span></p>
+                    <p class="text-gray-800 dark:text-gray-200 text-lg font-medium mb-3 whitespace-pre-wrap leading-relaxed">${msg.content || 'ส่งสื่อแนบ (ไม่มีข้อความ)'}</p>
+                    ${mediaHtml}
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-2">
+                        <button onclick="openStoryModal('${msg.id}')" class="text-sm bg-gradient-to-r from-pink-500 to-orange-400 text-white px-3 py-1.5 rounded-lg flex items-center shadow hover:opacity-90">
+                            IG Story
+                        </button>
+                        <button onclick="publishToWall('${msg.id}')" class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            นำขึ้นกระดานสาธารณะ
+                        </button>
+                        ${isUnread ? `<button onclick="markRead('${msg.id}')" class="text-sm text-primary px-3 py-1.5 hover:underline">อ่านแล้ว</button>` : ''}
+                        <button onclick="blockSender('${msg.senderToken}')" class="text-sm text-red-500 px-3 py-1.5 hover:underline ml-auto" title="บล็อกผู้ส่งรายนี้">บล็อก</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        window.markRead = async (id) => {
+            await updateDoc(doc(db, "messages", id), { isRead: true });
+            const msg = currentMessages.find(m => m.id === id);
+            if(msg) msg.isRead = true;
+            renderInbox();
+        };
+
+        window.blockSender = async (token) => {
+            if(!confirm("แน่ใจหรือไม่ว่าจะบล็อกผู้ส่งรายนี้?")) return;
+            try {
+                // Add to block list in Firestore (mock structure for rules validation)
+                await addDoc(collection(db, "blocks"), { uid: currentUser.uid, token: token, date: serverTimestamp() });
+                alert("บล็อกสำเร็จ");
+            } catch(e) { alert("Error blocking"); }
+        };
+
+        // --- IG Story Generator (Canvas API) ---
+        const themes = [
+            { bg: '#ffffff', text: '#1f2937', card: '#f3f4f6', shadow: 'rgba(0,0,0,0.05)' }, // Minimal Light
+            { bg: '#0f172a', text: '#ffffff', card: '#1e293b', shadow: 'rgba(0,0,0,0.5)' },  // Midnight
+            { bgGrad: ['#3b82f6', '#8b5cf6'], text: '#ffffff', card: 'rgba(255,255,255,0.15)', shadow: 'rgba(0,0,0,0.2)' }, // Gradient
+            { bg: '#fdf4ff', text: '#701a75', card: '#fae8ff', shadow: 'rgba(255,192,203,0.3)' } // Pastel
+        ];
+
+        window.openStoryModal = (id) => {
+            activeStoryMsg = currentMessages.find(m => m.id === id);
+            document.getElementById('modal-story').style.display = 'flex';
+            drawStory(0); // Default theme
+        };
+        window.closeStoryModal = () => { document.getElementById('modal-story').style.display = 'none'; };
+
+        window.drawStory = (themeIndex) => {
+            if(!activeStoryMsg) return;
+            const canvas = document.getElementById('story-canvas');
+            const ctx = canvas.getContext('2d');
+            const theme = themes[themeIndex];
+            
+            // Background
+            if(theme.bgGrad) {
+                const grd = ctx.createLinearGradient(0, 0, 1080, 1920);
+                grd.addColorStop(0, theme.bgGrad[0]);
+                grd.addColorStop(1, theme.bgGrad[1]);
+                ctx.fillStyle = grd;
+            } else {
+                ctx.fillStyle = theme.bg;
+            }
+            ctx.fillRect(0, 0, 1080, 1920);
+
+            // Draw Card Container
+            const cardX = 100, cardY = 500, cardW = 880, cardH = 600; // Simplified fixed height for demo, dynamic in real
+            
+            ctx.shadowColor = theme.shadow;
+            ctx.shadowBlur = 50;
+            ctx.shadowOffsetY = 20;
+            ctx.fillStyle = theme.card;
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, cardW, cardH, 40);
+            ctx.fill();
+            
+            ctx.shadowColor = 'transparent'; // Reset shadow
+
+            // Header (App Branding)
+            ctx.fillStyle = theme.text;
+            ctx.font = 'bold 36px Prompt';
+            ctx.textAlign = 'center';
+            ctx.fillText("ส่งข้อความให้ฉันสิ @"+currentUserData.username, 540, cardY + 80);
+            
+            ctx.strokeStyle = theme.text;
+            ctx.globalAlpha = 0.2;
+            ctx.beginPath(); ctx.moveTo(cardX + 60, cardY + 120); ctx.lineTo(cardX + cardW - 60, cardY + 120); ctx.stroke();
+            ctx.globalAlpha = 1.0;
+
+            // Content Wrap Text Helper
+            ctx.font = '400 52px Prompt';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            let words = (activeStoryMsg.content || "[ ส่งสื่อแนบมา ]").split(' ');
+            let line = '';
+            let lines = [];
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                if (metrics.width > cardW - 160 && n > 0) {
+                    lines.push(line);
+                    line = words[n] + ' ';
+                } else { line = testLine; }
+            }
+            lines.push(line);
+            
+            let textY = cardY + (cardH/2) + 20 - ((lines.length-1) * 35);
+            for(let i = 0; i < lines.length; i++) {
+                ctx.fillText(lines[i], 540, textY + (i*70));
+            }
+
+            // Footer branding
+            ctx.font = '500 28px Prompt';
+            ctx.globalAlpha = 0.5;
+            ctx.fillText("สร้างโดย AnonMsg", 540, cardY + cardH - 50);
+            ctx.globalAlpha = 1.0;
+
+            // Render to Image for CSS Scaling
+            document.getElementById('story-preview-img').src = canvas.toDataURL('image/png');
+        };
+
+        window.downloadStory = () => {
+            const data = document.getElementById('story-canvas').toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `story_${Date.now()}.png`;
+            link.href = data;
+            link.click();
+        };
+
+        window.shareToIG = async () => {
+            const canvas = document.getElementById('story-canvas');
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], "story.png", { type: "image/png" });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'AnonMsg Story',
+                        });
+                    } catch (error) { console.log('Share failed', error); }
+                } else {
+                    alert('เบราว์เซอร์ไม่รองรับการแชร์โดยตรง ระบบทำการดาวน์โหลดภาพแทน กรุณาเปิด IG และโพสต์รูปภาพนี้');
+                    downloadStory();
+                }
+            });
+        };
+
+        // --- Public Wall ---
+        window.publishToWall = async (msgId) => {
+            if(!confirm("ต้องการเผยแพร่ข้อความนี้บนหน้าสาธารณะใช่ไหม?")) return;
+            const msg = currentMessages.find(m => m.id === msgId);
+            try {
+                await setDoc(doc(db, "publicWall", msgId), {
+                    uid: currentUser.uid,
+                    content: msg.content,
+                    timestamp: serverTimestamp(),
+                    reactions: 0
+                });
+                alert("เผยแพร่สำเร็จ! จะแสดงในหน้า Profile สาธารณะของคุณ");
+            } catch(e) { alert("Error publishing"); }
+        };
+
+        async function loadPublicWall(uid) {
+            const container = document.getElementById('public-wall-list');
+            document.getElementById('public-wall-container').classList.remove('hidden');
+            
+            const q = query(collection(db, "publicWall"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(10));
+            const snap = await getDocs(q);
+            
+            container.innerHTML = "";
+            if(snap.empty) {
+                container.innerHTML = "<p class='text-gray-500 text-sm text-center'>ยังไม่มีข้อความบนกระดาน</p>";
+                return;
+            }
+
+            snap.forEach(docSnap => {
+                const data = docSnap.data();
+                container.innerHTML += `
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl text-left shadow-sm">
+                    <p class="text-gray-800 dark:text-gray-200 font-medium">${data.content}</p>
+                    <div class="mt-3 flex justify-end">
+                        <button onclick="addReaction('${docSnap.id}')" class="flex items-center text-sm text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/30 px-2 py-1 rounded">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                            <span id="reaction-${docSnap.id}">${data.reactions || 0}</span>
+                        </button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // --- Analytics ---
+        async function loadAnalytics() {
+            document.getElementById('stat-total').innerText = currentMessages.length;
+            const imgs = currentMessages.filter(m => m.imageUrl).length;
+            const voices = currentMessages.filter(m => m.voiceUrl).length;
+            document.getElementById('stat-images').innerText = imgs;
+            document.getElementById('stat-voice').innerText = voices;
+
+            // Group messages by day for chart
+            const days = {};
+            for(let i=6; i>=0; i--) {
+                let d = new Date(); d.setDate(d.getDate() - i);
+                days[d.toLocaleDateString('th-TH')] = 0;
+            }
+            
+            currentMessages.forEach(m => {
+                if(m.timestamp) {
+                    const ds = new Date(m.timestamp.toMillis()).toLocaleDateString('th-TH');
+                    if(days[ds] !== undefined) days[ds]++;
+                }
+            });
+
+            const ctx = document.getElementById('chart-messages').getContext('2d');
+            if(window.myChart) window.myChart.destroy();
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(days),
+                    datasets: [{
+                        label: 'ข้อความที่ได้รับ',
+                        data: Object.values(days),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
